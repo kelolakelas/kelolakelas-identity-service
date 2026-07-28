@@ -35,6 +35,21 @@ type RegisterInvitedUserPayload struct {
 	Password  string `json:"password" binding:"required,min=6"`
 }
 
+// CreateInvitation godoc
+// @Summary Create tenant invitation
+// @Description Invite a new member to join the tenant with a specific role
+// @Tags Invitations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
+// @Param request body CreateInvitationPayload true "Create invitation payload"
+// @Success 201 {object} domain.HTTPResponse{data=domain.TenantInvitation}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/invitations [post]
 func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	tenantIDVal, exists := c.Get("tenant_id")
 	if !exists {
@@ -91,6 +106,18 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	})
 }
 
+// VerifyInvitation godoc
+// @Summary Verify invitation token
+// @Description Verify validity of an invitation token
+// @Tags Invitations
+// @Accept json
+// @Produce json
+// @Param token query string true "Invitation token"
+// @Success 200 {object} domain.HTTPResponse{data=domain.TenantInvitation}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/invitations/verify [get]
 func (h *InvitationHandler) VerifyInvitation(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -143,6 +170,19 @@ func (h *InvitationHandler) VerifyInvitation(c *gin.Context) {
 	})
 }
 
+// RegisterInvitedUser godoc
+// @Summary Register user via invitation
+// @Description Complete user registration using a valid invitation token
+// @Tags Invitations
+// @Accept json
+// @Produce json
+// @Param request body RegisterInvitedUserPayload true "Register invited user payload"
+// @Success 201 {object} domain.HTTPResponse{data=domain.User}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/invitations/register [post]
 func (h *InvitationHandler) RegisterInvitedUser(c *gin.Context) {
 	var payload RegisterInvitedUserPayload
 	if err := c.ShouldBindJSON(&payload); err != nil {

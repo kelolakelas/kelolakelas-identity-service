@@ -35,6 +35,18 @@ type LoginPayload struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// Register godoc
+// @Summary Register new user
+// @Description Register a new end-user (student or parent)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterPayload true "Register payload"
+// @Success 201 {object} domain.HTTPResponse{data=domain.User}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var payload RegisterPayload
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -79,6 +91,18 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary User login
+// @Description Authenticate user and return JWT access token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body LoginPayload true "Login payload"
+// @Success 200 {object} domain.HTTPResponse
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var payload LoginPayload
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -118,6 +142,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// RegisterTenant godoc
+// @Summary Register tenant and owner
+// @Description Register a new tenant organization along with its initial owner user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body domain.RegisterTenantRequest true "Register tenant payload"
+// @Success 201 {object} domain.HTTPResponse{data=domain.RegisterTenantResponse}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/tenants/register [post]
 func (h *AuthHandler) RegisterTenant(c *gin.Context) {
 	var payload domain.RegisterTenantRequest
 	if err := c.ShouldBindJSON(&payload); err != nil {

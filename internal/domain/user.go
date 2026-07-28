@@ -15,6 +15,18 @@ var (
 	ErrUserNotFound       = errors.New("user not found")
 )
 
+type HTTPResponse struct {
+	Status  string      `json:"status" example:"success"`
+	Message string      `json:"message" example:"Operation completed successfully"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+type ErrorResponse struct {
+	Status  string      `json:"status" example:"error"`
+	Message string      `json:"message" example:"An error occurred"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 type User struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	Email        string         `gorm:"type:varchar(255);unique;not null" json:"email"`

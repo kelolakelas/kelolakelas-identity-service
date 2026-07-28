@@ -37,6 +37,17 @@ func extractTenantID(c *gin.Context) (uuid.UUID, error) {
 	return uuid.Nil, errors.New("tenant ID is required")
 }
 
+// GetPermissions godoc
+// @Summary Get all system permissions
+// @Description Retrieve a list of all available permissions in the system
+// @Tags Roles & Permissions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=[]domain.PermissionResponse}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/permissions [get]
 func (h *RoleHandler) GetPermissions(c *gin.Context) {
 	permissions, err := h.roleUsecase.FetchAllPermissions(c.Request.Context())
 	if err != nil {
@@ -55,6 +66,19 @@ func (h *RoleHandler) GetPermissions(c *gin.Context) {
 	})
 }
 
+// GetRoles godoc
+// @Summary Get tenant roles
+// @Description Fetch all custom and system roles for a specific tenant
+// @Tags Roles & Permissions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
+// @Success 200 {object} domain.HTTPResponse{data=[]domain.RoleResponse}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/roles [get]
 func (h *RoleHandler) GetRoles(c *gin.Context) {
 	tenantID, err := extractTenantID(c)
 	if err != nil {
@@ -83,6 +107,21 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 	})
 }
 
+// CreateRole godoc
+// @Summary Create a custom role
+// @Description Create a new custom role with assigned permissions for a tenant
+// @Tags Roles & Permissions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
+// @Param request body domain.CreateRoleRequest true "Create role payload"
+// @Success 201 {object} domain.HTTPResponse{data=domain.RoleResponse}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/roles [post]
 func (h *RoleHandler) CreateRole(c *gin.Context) {
 	tenantID, err := extractTenantID(c)
 	if err != nil {
@@ -129,6 +168,24 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 	})
 }
 
+// UpdateRole godoc
+// @Summary Update a custom role
+// @Description Update name, description, or permissions of an existing custom role
+// @Tags Roles & Permissions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
+// @Param id path string true "Role ID (UUID)"
+// @Param request body domain.UpdateRoleRequest true "Update role payload"
+// @Success 200 {object} domain.HTTPResponse{data=domain.RoleResponse}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/roles/{id} [put]
 func (h *RoleHandler) UpdateRole(c *gin.Context) {
 	tenantID, err := extractTenantID(c)
 	if err != nil {
@@ -202,6 +259,23 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 	})
 }
 
+// DeleteRole godoc
+// @Summary Delete a custom role
+// @Description Delete an existing custom role from a tenant
+// @Tags Roles & Permissions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
+// @Param id path string true "Role ID (UUID)"
+// @Success 200 {object} domain.HTTPResponse
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/roles/{id} [delete]
 func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	tenantID, err := extractTenantID(c)
 	if err != nil {
