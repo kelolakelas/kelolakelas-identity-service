@@ -1,0 +1,163 @@
+package main
+
+import (
+	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+
+	"github.com/tutorin-id/tutorin-identity-service/internal/config"
+	idgrpc "github.com/tutorin-id/tutorin-identity-service/internal/delivery/grpc"
+	"github.com/tutorin-id/tutorin-identity-service/internal/delivery/http/handler"
+	"github.com/tutorin-id/tutorin-identity-service/internal/delivery/http/middleware"
+	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
+	"github.com/tutorin-id/tutorin-identity-service/internal/repository"
+	"github.com/tutorin-id/tutorin-identity-service/internal/usecase"
+	"github.com/tutorin-id/tutorin-identity-service/pkg/database"
+	"github.com/tutorin-id/tutorin-identity-service/pkg/email"
+	"github.com/tutorin-id/tutorin-identity-service/pkg/jwt"
+	pb "github.com/tutorin-id/tutorin-identity-service/pkg/proto/tenant"
+)
+
+func main() {
+	// Initialize JSON logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	// Load configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		slog.Error("Failed to load configuration", "error", err)
+		os.Exit(1)
+	}
+
+	// Initialize DB
+	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	if err != nil {
+		slog.Error("Database connection failed", "error", err)
+		os.Exit(1)
+	}
+
+	// Auto-migrate schema
+	slog.Info("Running auto-migration...")
+	if err := db.AutoMigrate(
+		&domain.User{},
+		&domain.Tenant{},
+		&domain.TenantMember{},
+		&domain.Role{},
+		&domain.Permission{},
+		&domain.RolePermission{},
+		&domain.TenantInvitation{},
+		&domain.TenantWallet{},
+		&domain.UserWallet{},
+		&domain.TenantBankAccount{},
+		&domain.UserBankAccount{},
+		&domain.TenantLedgerEntry{},
+		&domain.UserLedgerEntry{},
+		&domain.TenantWithdrawal{},
+		&domain.UserWithdrawal{},
+	); err != nil {
+		slog.Error("Auto-migration failed", "error", err)
+		os.Exit(1)
+	}
+
+	// Seed default permissions and system roles
+	if err := database.SeedAll(db); err != nil {
+		slog.Error("Seeding default permissions failed", "error", err)
+	}
+
+	// Initialize Redis
+	var redisService *database.RedisService
+	rdb, err := database.NewRedisClient(cfg.RedisHost, cfg.RedisPort, cfg.RedisPassword)
+	if err != nil {
+		slog.Warn("Redis connection failed (optional/non-blocking)", "error", err)
+	} else if rdb != nil {
+		redisService = database.NewRedisService(rdb)
+		slog.Info("Redis connection established successfully")
+	}
+
+	// Initialize JWT Service (valid for 24 hours)
+	jwtService := jwt.NewJWTService(cfg.JWTSecret, 24*time.Hour)
+
+	// Initialize Services, Repositories & Usecases
+	emailService := email.NewResendEmailService(cfg.ResendAPIKey, cfg.ResendFromEmail)
+
+	userRepo := repository.NewUserRepository(db)
+	tenantRepo := repository.NewTenantRepository(db)
+	invitationRepo := repository.NewInvitationRepository(db)
+	rbacRepo := repository.NewRbacRepository(db)
+
+	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
+	tenantUsecase := usecase.NewTenantUsecase(userRepo, jwtService, redisService)
+	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, emailService)
+	roleUsecase := usecase.NewRoleUsecase(rbacRepo)
+
+	authHandler := handler.NewAuthHandler(authUsecase, tenantUsecase)
+	invitationHandler := handler.NewInvitationHandler(invitationUsecase, authUsecase)
+	roleHandler := handler.NewRoleHandler(roleUsecase)
+
+	// Gin Router
+	r := gin.New()
+	r.Use(gin.Recovery())
+
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "healthy",
+			"service": "identity-service",
+		})
+	})
+
+	// Route groups
+	apiV1 := r.Group("/api/v1")
+	{
+		// Public Auth & Invitation routes
+		apiV1.POST("/auth/register", authHandler.Register)
+		apiV1.POST("/auth/login", authHandler.Login)
+		apiV1.POST("/tenants/register", authHandler.RegisterTenant)
+		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
+		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)
+
+		// Protected routes
+		protected := apiV1.Group("")
+		protected.Use(middleware.AuthMiddleware(jwtService))
+		{
+			protected.POST("/invitations", invitationHandler.CreateInvitation)
+
+			// Role & Permission routes
+			protected.GET("/permissions", roleHandler.GetPermissions)
+			protected.GET("/roles", roleHandler.GetRoles)
+			protected.POST("/roles", roleHandler.CreateRole)
+			protected.PUT("/roles/:id", roleHandler.UpdateRole)
+			protected.DELETE("/roles/:id", roleHandler.DeleteRole)
+		}
+	}
+
+	// Start gRPC Server
+	go func() {
+		lis, err := net.Listen("tcp", ":50051")
+		if err != nil {
+			slog.Error("Failed to listen for gRPC", "error", err)
+			return
+		}
+
+		grpcServer := grpc.NewServer()
+		tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
+		pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
+
+		slog.Info("Starting gRPC server on port :50051")
+		if err := grpcServer.Serve(lis); err != nil {
+			slog.Error("Failed to serve gRPC", "error", err)
+		}
+	}()
+
+	slog.Info("Starting identity service", "port", cfg.Port)
+	if err := r.Run(":" + cfg.Port); err != nil {
+		slog.Error("Failed to start server", "error", err)
+		os.Exit(1)
+	}
+}
