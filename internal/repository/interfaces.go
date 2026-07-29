@@ -23,6 +23,7 @@ type UserRepository interface {
 type TenantRepository interface {
 	Create(ctx context.Context, tenant *domain.Tenant) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, error)
+	IsNameExists(ctx context.Context, name string) (bool, error)
 	Update(ctx context.Context, tenant *domain.Tenant) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

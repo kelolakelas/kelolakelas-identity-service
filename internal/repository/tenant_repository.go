@@ -36,6 +36,14 @@ func (r *tenantRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.T
 	return &tenant, nil
 }
 
+func (r *tenantRepository) IsNameExists(ctx context.Context, name string) (bool, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&domain.Tenant{}).Where("LOWER(name) = LOWER(?)", name).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *tenantRepository) Update(ctx context.Context, tenant *domain.Tenant) error {
 	if err := r.db.WithContext(ctx).Save(tenant).Error; err != nil {
 		return err

@@ -3,15 +3,20 @@ package domain
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
+var (
+	ErrTenantNameAlreadyExists = errors.New("tenant name already exists")
+)
+
 type Tenant struct {
 	ID               uuid.UUID        `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name             string           `gorm:"type:varchar(255);not null" json:"name"`
+	Name             string           `gorm:"type:varchar(255);unique;not null" json:"name"`
 	Phone            *string          `gorm:"type:varchar(50)" json:"phone,omitempty"`
 	Address          *string          `gorm:"type:text" json:"address,omitempty"`
 	About            *json.RawMessage `gorm:"type:jsonb;serializer:json" json:"about,omitempty"`

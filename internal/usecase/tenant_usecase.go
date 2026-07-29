@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
+	"github.com/tutorin-id/tutorin-identity-service/internal/repository"
 	"github.com/tutorin-id/tutorin-identity-service/pkg/database"
 	"github.com/tutorin-id/tutorin-identity-service/pkg/hash"
 	"github.com/tutorin-id/tutorin-identity-service/pkg/jwt"
@@ -14,19 +15,30 @@ import (
 
 type tenantUsecase struct {
 	userRepo     domain.UserRepository
+	tenantRepo   repository.TenantRepository
 	jwtService   *jwt.JWTService
 	redisService *database.RedisService
 }
 
-func NewTenantUsecase(userRepo domain.UserRepository, jwtService *jwt.JWTService, redisService *database.RedisService) domain.TenantUsecase {
+func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, jwtService *jwt.JWTService, redisService *database.RedisService) domain.TenantUsecase {
 	return &tenantUsecase{
 		userRepo:     userRepo,
+		tenantRepo:   tenantRepo,
 		jwtService:   jwtService,
 		redisService: redisService,
 	}
 }
 
 func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.RegisterTenantRequest) (*domain.RegisterTenantResponse, error) {
+	// Check if tenant name already exists
+	nameExists, err := u.tenantRepo.IsNameExists(ctx, req.TenantName)
+	if err != nil {
+		return nil, err
+	}
+	if nameExists {
+		return nil, domain.ErrTenantNameAlreadyExists
+	}
+
 	// Check if user already exists
 	existing, err := u.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existing != nil {

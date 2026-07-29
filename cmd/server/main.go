@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 
+	_ "github.com/tutorin-id/tutorin-identity-service/docs"
 	"github.com/tutorin-id/tutorin-identity-service/internal/config"
 	idgrpc "github.com/tutorin-id/tutorin-identity-service/internal/delivery/grpc"
 	"github.com/tutorin-id/tutorin-identity-service/internal/delivery/http/handler"
@@ -23,6 +26,13 @@ import (
 	pb "github.com/tutorin-id/tutorin-identity-service/pkg/proto/tenant"
 )
 
+// @title Tutorin Identity Service API
+// @version 1.0
+// @description Identity & Access Management Service for Tutorin Platform
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// Initialize JSON logging
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -92,7 +102,7 @@ func main() {
 	rbacRepo := repository.NewRbacRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
-	tenantUsecase := usecase.NewTenantUsecase(userRepo, jwtService, redisService)
+	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, jwtService, redisService)
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, emailService)
 	roleUsecase := usecase.NewRoleUsecase(rbacRepo)
 
@@ -111,6 +121,9 @@ func main() {
 			"service": "identity-service",
 		})
 	})
+
+	// Swagger UI
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Route groups
 	apiV1 := r.Group("/api/v1")

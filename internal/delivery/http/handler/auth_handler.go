@@ -167,6 +167,14 @@ func (h *AuthHandler) RegisterTenant(c *gin.Context) {
 
 	res, err := h.tenantUsecase.RegisterTenant(c.Request.Context(), &payload)
 	if err != nil {
+		if errors.Is(err, domain.ErrTenantNameAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{
+				"status":  "error",
+				"message": "Tenant with this name already exists",
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"status":  "error",
