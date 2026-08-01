@@ -1,4 +1,4 @@
-module github.com/tutorin-id/tutorin-identity-service
+module github.com/kelolakelas/kelolakelas-identity-service
 
 go 1.26.5
 

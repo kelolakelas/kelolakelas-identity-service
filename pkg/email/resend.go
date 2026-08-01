@@ -28,7 +28,7 @@ func NewResendEmailService(apiKey, fromEmail string) EmailService {
 }
 
 func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, tenantName string) error {
-	inviteURL := fmt.Sprintf("https://app.tutorin.com/invite?token=%s", token)
+	inviteURL := fmt.Sprintf("https://app.kelolakelas.com/invite?token=%s", token)
 
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
@@ -50,7 +50,7 @@ func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, t
         <div class="header">Undangan Bergabung dengan %s</div>
         <div class="content">
             Halo,<br><br>
-            Anda telah diundang untuk bergabung dengan bimbel <strong>%s</strong> di platform Tutorin.<br>
+            Anda telah diundang untuk bergabung dengan bimbel <strong>%s</strong> di platform KelolaKelas.<br>
             Silakan klik tombol di bawah ini untuk menerima undangan dan menyelesaikan pendaftaran akun Anda:
         </div>
         <div style="text-align: center; margin: 32px 0;">
@@ -62,7 +62,7 @@ func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, t
         </div>
         <div class="footer">
             Tautan undangan ini berlaku selama 48 jam.<br>
-            &copy; Tutorin Platform. All rights reserved.
+            &copy; KelolaKelas Platform. All rights reserved.
         </div>
     </div>
 </body>
@@ -72,7 +72,7 @@ func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, t
 	params := &resend.SendEmailRequest{
 		From:    s.fromEmail,
 		To:      []string{toEmail},
-		Subject: fmt.Sprintf("Undangan Bergabung dengan %s - Tutorin", tenantName),
+		Subject: fmt.Sprintf("Undangan Bergabung dengan %s - KelolaKelas", tenantName),
 		Html:    htmlBody,
 	}
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 )
 
 type AuthHandler struct {

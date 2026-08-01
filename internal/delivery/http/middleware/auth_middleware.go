@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/tutorin-id/tutorin-identity-service/pkg/jwt"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
 )
 
 func AuthMiddleware(jwtService *jwt.JWTService) gin.HandlerFunc {

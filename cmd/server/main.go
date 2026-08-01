@@ -12,23 +12,23 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 
-	_ "github.com/tutorin-id/tutorin-identity-service/docs"
-	"github.com/tutorin-id/tutorin-identity-service/internal/config"
-	idgrpc "github.com/tutorin-id/tutorin-identity-service/internal/delivery/grpc"
-	"github.com/tutorin-id/tutorin-identity-service/internal/delivery/http/handler"
-	"github.com/tutorin-id/tutorin-identity-service/internal/delivery/http/middleware"
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
-	"github.com/tutorin-id/tutorin-identity-service/internal/repository"
-	"github.com/tutorin-id/tutorin-identity-service/internal/usecase"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/database"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/email"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/jwt"
-	pb "github.com/tutorin-id/tutorin-identity-service/pkg/proto/tenant"
+	_ "github.com/kelolakelas/kelolakelas-identity-service/docs"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/config"
+	idgrpc "github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/grpc"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/http/handler"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/http/middleware"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/repository"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/usecase"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/email"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
+	pb "github.com/kelolakelas/kelolakelas-identity-service/pkg/proto/tenant"
 )
 
-// @title Tutorin Identity Service API
+// @title KelolaKelas Identity Service API
 // @version 1.0
-// @description Identity & Access Management Service for Tutorin Platform
+// @description Identity & Access Management Service for KelolaKelas Platform
 // @BasePath /
 // @securityDefinitions.apikey BearerAuth
 // @in header

@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/database"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/hash"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/jwt"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/hash"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
 )
 
 type authUsecase struct {

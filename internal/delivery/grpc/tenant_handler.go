@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
-	pb "github.com/tutorin-id/tutorin-identity-service/pkg/proto/tenant"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	pb "github.com/kelolakelas/kelolakelas-identity-service/pkg/proto/tenant"
 )
 
 type TenantServiceServer struct {

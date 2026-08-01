@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Identity \u0026 Access Management Service for Tutorin Platform",
-        "title": "Tutorin Identity Service API",
+        "description": "Identity \u0026 Access Management Service for KelolaKelas Platform",
+        "title": "KelolaKelas Identity Service API",
         "contact": {},
         "version": "1.0"
     },
@@ -36,25 +36,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -90,13 +90,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.User"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User"
                                         }
                                     }
                                 }
@@ -106,19 +106,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -166,13 +166,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.TenantInvitation"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation"
                                         }
                                     }
                                 }
@@ -182,25 +182,25 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -236,13 +236,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.User"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User"
                                         }
                                     }
                                 }
@@ -252,25 +252,25 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -304,13 +304,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.TenantInvitation"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation"
                                         }
                                     }
                                 }
@@ -320,19 +320,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -362,7 +362,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
@@ -370,7 +370,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.PermissionResponse"
+                                                "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse"
                                             }
                                         }
                                     }
@@ -381,13 +381,13 @@
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -426,7 +426,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
@@ -434,7 +434,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.RoleResponse"
+                                                "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse"
                                             }
                                         }
                                     }
@@ -445,19 +445,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -493,7 +493,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.CreateRoleRequest"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.CreateRoleRequest"
                         }
                     }
                 ],
@@ -503,13 +503,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.RoleResponse"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse"
                                         }
                                     }
                                 }
@@ -519,25 +519,25 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -582,7 +582,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.UpdateRoleRequest"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.UpdateRoleRequest"
                         }
                     }
                 ],
@@ -592,13 +592,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.RoleResponse"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse"
                                         }
                                     }
                                 }
@@ -608,37 +608,37 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -680,43 +680,43 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -742,7 +742,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.RegisterTenantRequest"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantRequest"
                         }
                     }
                 ],
@@ -752,13 +752,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse"
+                                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.RegisterTenantResponse"
+                                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantResponse"
                                         }
                                     }
                                 }
@@ -768,19 +768,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse"
+                            "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -788,7 +788,7 @@
         }
     },
     "definitions": {
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.CreateRoleRequest": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.CreateRoleRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -809,7 +809,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.ErrorResponse": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -823,7 +823,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.HTTPResponse": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -837,7 +837,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.PermissionResponse": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -851,7 +851,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.RegisterTenantRequest": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -888,21 +888,21 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.RegisterTenantResponse": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantResponse": {
             "type": "object",
             "properties": {
                 "tenant": {
-                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.Tenant"
+                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.Tenant"
                 },
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.User"
+                    "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User"
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.RoleResponse": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -920,7 +920,7 @@
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_tutorin-id_tutorin-identity-service_internal_domain.PermissionResponse"
+                        "$ref": "#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse"
                     }
                 },
                 "tenant_id": {
@@ -928,7 +928,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.Tenant": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.Tenant": {
             "type": "object",
             "properties": {
                 "about": {
@@ -966,7 +966,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.TenantInvitation": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -998,7 +998,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.UpdateRoleRequest": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.UpdateRoleRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -1019,7 +1019,7 @@
                 }
             }
         },
-        "github_com_tutorin-id_tutorin-identity-service_internal_domain.User": {
+        "github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User": {
             "type": "object",
             "properties": {
                 "created_at": {

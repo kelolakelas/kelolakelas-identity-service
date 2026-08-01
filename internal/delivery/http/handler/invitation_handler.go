@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
-	"github.com/tutorin-id/tutorin-identity-service/internal/usecase"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/usecase"
 )
 
 type InvitationHandler struct {

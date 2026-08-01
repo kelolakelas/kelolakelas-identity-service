@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/config"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/database"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/config"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
 )
 
 func main() {

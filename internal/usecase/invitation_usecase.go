@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
-	"github.com/tutorin-id/tutorin-identity-service/internal/repository"
-	"github.com/tutorin-id/tutorin-identity-service/pkg/email"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/repository"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/email"
 )
 
 type invitationUsecase struct {

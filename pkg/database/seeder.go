@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/tutorin-id/tutorin-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 )
 
 type PermissionSeed struct {
