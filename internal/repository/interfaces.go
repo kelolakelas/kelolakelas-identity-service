@@ -35,6 +35,8 @@ type TenantMemberRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
+type MemberRepository = domain.MemberRepository
+
 type InvitationRepository interface {
 	Create(ctx context.Context, invitation *domain.TenantInvitation) error
 	GetByToken(ctx context.Context, token string) (*domain.TenantInvitation, error)

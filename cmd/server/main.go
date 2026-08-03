@@ -100,15 +100,19 @@ func main() {
 	tenantRepo := repository.NewTenantRepository(db)
 	invitationRepo := repository.NewInvitationRepository(db)
 	rbacRepo := repository.NewRbacRepository(db)
+	memberRepo := repository.NewMemberRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
 	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, jwtService, redisService)
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, emailService)
 	roleUsecase := usecase.NewRoleUsecase(rbacRepo)
+	memberUsecase := usecase.NewMemberUsecase(memberRepo)
 
 	authHandler := handler.NewAuthHandler(authUsecase, tenantUsecase)
 	invitationHandler := handler.NewInvitationHandler(invitationUsecase, authUsecase)
 	roleHandler := handler.NewRoleHandler(roleUsecase)
+	memberHandler := handler.NewMemberHandler(memberUsecase)
+	tenantHandler := handler.NewTenantHandler(tenantUsecase)
 
 	// Gin Router
 	r := gin.New()
@@ -140,6 +144,14 @@ func main() {
 		protected.Use(middleware.AuthMiddleware(jwtService))
 		{
 			protected.POST("/invitations", invitationHandler.CreateInvitation)
+			protected.GET("/members", memberHandler.ListMembers)
+			protected.GET("/tutors", memberHandler.ListTutors)
+			protected.GET("/members/:id", memberHandler.GetMember)
+			protected.PUT("/members/:id/role", memberHandler.UpdateMemberRole)
+			protected.GET("/tenant/settings", tenantHandler.GetSettings)
+			protected.PATCH("/tenant/settings", tenantHandler.UpdateSettings)
+			protected.GET("/tenants/settings", tenantHandler.GetSettings)
+			protected.PATCH("/tenants/settings", tenantHandler.UpdateSettings)
 
 			// Role & Permission routes
 			protected.GET("/permissions", roleHandler.GetPermissions)

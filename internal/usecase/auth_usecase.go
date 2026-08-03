@@ -58,33 +58,34 @@ func (u *authUsecase) RegisterInvitedUser(ctx context.Context, token, firstName,
 	return u.userRepo.RegisterInvitedUserTx(ctx, token, firstName, lastName, password)
 }
 
-func (u *authUsecase) Login(ctx context.Context, email, password string) (string, *domain.User, error) {
+func (u *authUsecase) Login(ctx context.Context, email, password string) (string, *domain.User, uuid.UUID, error) {
 	// Get user
 	user, err := u.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return "", nil, domain.ErrInvalidCredentials
+			return "", nil, uuid.Nil, domain.ErrInvalidCredentials
 		}
-		return "", nil, err
+		return "", nil, uuid.Nil, err
 	}
 
 	// Verify password
 	if !hash.CheckPasswordHash(password, user.PasswordHash) {
-		return "", nil, domain.ErrInvalidCredentials
+		return "", nil, uuid.Nil, domain.ErrInvalidCredentials
 	}
 
 	// Find active tenant member
-	var tenantID, roleID uuid.UUID
+	var tenantID, roleID, memberID uuid.UUID
 	member, err := u.userRepo.GetTenantMemberByUserID(ctx, user.ID)
 	if err == nil && member != nil {
 		tenantID = member.TenantID
 		roleID = member.RoleID
+		memberID = member.ID
 	}
 
 	// Generate token
-	token, err := u.jwtService.GenerateToken(user.ID, user.Email, tenantID, roleID)
+	token, err := u.jwtService.GenerateToken(user.ID, user.Email, tenantID, roleID, memberID, user.IsParent)
 	if err != nil {
-		return "", nil, err
+		return "", nil, uuid.Nil, err
 	}
 
 	// Save permissions to Redis
@@ -95,5 +96,5 @@ func (u *authUsecase) Login(ctx context.Context, email, password string) (string
 		}
 	}
 
-	return token, user, nil
+	return token, user, tenantID, nil
 }

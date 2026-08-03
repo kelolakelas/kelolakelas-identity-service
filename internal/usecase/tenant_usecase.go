@@ -76,7 +76,7 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 	}
 
 	// Generate Token
-	token, err := u.jwtService.GenerateToken(user.ID, user.Email, tenant.ID, member.RoleID)
+	token, err := u.jwtService.GenerateToken(user.ID, user.Email, tenant.ID, member.RoleID, member.ID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,25 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 	}
 
 	return &domain.RegisterTenantResponse{
-		Token:  token,
-		User:   *user,
-		Tenant: *tenant,
+		Token: token, User: *user, Tenant: *tenant, TenantID: tenant.ID,
 	}, nil
+}
+
+func (u *tenantUsecase) GetTenantByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
+	return u.tenantRepo.GetByID(ctx, id)
+}
+
+func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id uuid.UUID, req *domain.UpdateTenantSettingsRequest) (*domain.Tenant, error) {
+	tenant, err := u.tenantRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	tenant.Name = req.Name
+	tenant.Phone = req.Phone
+	tenant.Address = req.Address
+	tenant.About = req.About
+	if err := u.tenantRepo.Update(ctx, tenant); err != nil {
+		return nil, err
+	}
+	return tenant, nil
 }

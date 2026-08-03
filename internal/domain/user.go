@@ -21,6 +21,15 @@ type HTTPResponse struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+type AuthUserResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	IsParent  bool      `json:"is_parent"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+}
+
 type ErrorResponse struct {
 	Status  string      `json:"status" example:"error"`
 	Message string      `json:"message" example:"An error occurred"`
@@ -55,5 +64,5 @@ type UserRepository interface {
 type AuthUsecase interface {
 	Register(ctx context.Context, user *User, password string) (*User, error)
 	RegisterInvitedUser(ctx context.Context, token, firstName, lastName, password string) (*User, error)
-	Login(ctx context.Context, email, password string) (string, *User, error)
+	Login(ctx context.Context, email, password string) (string, *User, uuid.UUID, error)
 }

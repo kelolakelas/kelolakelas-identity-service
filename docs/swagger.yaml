@@ -1,6 +1,21 @@
 basePath: /
 definitions:
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.CreateRoleRequest:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.AuthUserResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      is_parent:
+        type: boolean
+      last_name:
+        type: string
+      tenant_id:
+        type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreateRoleRequest:
     properties:
       description:
         type: string
@@ -14,7 +29,7 @@ definitions:
     - name
     - permission_ids
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse:
     properties:
       data: {}
       message:
@@ -24,7 +39,7 @@ definitions:
         example: error
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse:
     properties:
       data: {}
       message:
@@ -34,7 +49,65 @@ definitions:
         example: success
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Pagination'
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberRoleResponse'
+      status:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberRoleResponse:
+    properties:
+      id:
+        type: string
+      is_system_role:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PermissionResponse'
+        type: array
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Pagination:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PermissionResponse:
     properties:
       description:
         type: string
@@ -43,7 +116,7 @@ definitions:
       name:
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantRequest:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegisterTenantRequest:
     properties:
       email:
         type: string
@@ -69,16 +142,18 @@ definitions:
     - password
     - tenant_name
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantResponse:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegisterTenantResponse:
     properties:
       tenant:
-        $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.Tenant'
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
+      tenant_id:
+        type: string
       token:
         type: string
       user:
-        $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User'
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.User'
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse:
     properties:
       description:
         type: string
@@ -90,12 +165,12 @@ definitions:
         type: string
       permissions:
         items:
-          $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse'
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PermissionResponse'
         type: array
       tenant_id:
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.Tenant:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant:
     properties:
       about:
         items:
@@ -120,7 +195,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantInvitation:
     properties:
       created_at:
         type: string
@@ -141,7 +216,36 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.UpdateRoleRequest:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Pagination'
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      status:
+        type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateMemberRoleRequest:
+    properties:
+      role_id:
+        type: string
+    required:
+    - role_id
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateRoleRequest:
     properties:
       description:
         type: string
@@ -155,7 +259,22 @@ definitions:
     - name
     - permission_ids
     type: object
-  github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User:
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantSettingsRequest:
+    properties:
+      about:
+        items:
+          type: integer
+        type: array
+      address:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    required:
+    - name
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.User:
     properties:
       created_at:
         type: string
@@ -266,19 +385,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       summary: User login
       tags:
       - Auth
@@ -286,7 +405,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Register a new end-user (student or parent)
+      description: |-
+        Register a new end-user (student or parent)
+        Registration does not auto-login. The client must call /auth/login after registration.
       parameters:
       - description: Register payload
         in: body
@@ -301,23 +422,23 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.AuthUserResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       summary: Register new user
       tags:
       - Auth
@@ -345,27 +466,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantInvitation'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create tenant invitation
@@ -390,27 +511,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.User'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.User'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       summary: Register user via invitation
       tags:
       - Invitations
@@ -432,26 +553,161 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.TenantInvitation'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantInvitation'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       summary: Verify invitation token
       tags:
       - Invitations
+  /api/v1/members:
+    get:
+      description: Fetch members belonging to the active tenant.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search email or name
+        in: query
+        name: search
+        type: string
+      - description: active or inactive
+        in: query
+        name: status
+        type: string
+      - description: Role UUID
+        in: query
+        name: role_id
+        type: string
+      - description: created_at, updated_at, email, or name
+        in: query
+        name: sort
+        type: string
+      - description: asc or desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List tenant members
+      tags:
+      - Members
+  /api/v1/members/{id}:
+    get:
+      parameters:
+      - description: Member UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get tenant member
+      tags:
+      - Members
+  /api/v1/members/{id}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Member UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateMemberRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update member role
+      tags:
+      - Members
   /api/v1/permissions:
     get:
       consumes:
@@ -464,21 +720,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.PermissionResponse'
+                    $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PermissionResponse'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all system permissions
@@ -502,25 +758,25 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse'
+                    $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse'
                   type: array
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get tenant roles
@@ -541,7 +797,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.CreateRoleRequest'
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreateRoleRequest'
       produces:
       - application/json
       responses:
@@ -549,27 +805,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a custom role
@@ -597,31 +853,31 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a custom role
@@ -648,7 +904,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.UpdateRoleRequest'
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateRoleRequest'
       produces:
       - application/json
       responses:
@@ -656,40 +912,110 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RoleResponse'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update a custom role
       tags:
       - Roles & Permissions
+  /api/v1/tenant/settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tenant settings
+      tags:
+      - Tenant Settings
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant settings payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update tenant settings
+      tags:
+      - Tenant Settings
   /api/v1/tenants/register:
     post:
       consumes:
@@ -702,7 +1028,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantRequest'
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegisterTenantRequest'
       produces:
       - application/json
       responses:
@@ -710,26 +1036,145 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.RegisterTenantResponse'
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegisterTenantResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kelolakelas-id_kelolakelas-identity-service_internal_domain.ErrorResponse'
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       summary: Register tenant and owner
       tags:
       - Auth
+  /api/v1/tenants/settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tenant settings
+      tags:
+      - Tenant Settings
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant settings payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update tenant settings
+      tags:
+      - Tenant Settings
+  /api/v1/tutors:
+    get:
+      description: List active teacher/tutor members in the active tenant
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Search tutor
+        in: query
+        name: search
+        type: string
+      - description: active or inactive
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List tenant tutors
+      tags:
+      - Tutors
 securityDefinitions:
   BearerAuth:
     in: header

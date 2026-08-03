@@ -39,11 +39,21 @@ type RegisterTenantRequest struct {
 }
 
 type RegisterTenantResponse struct {
-	Token  string `json:"token"`
-	User   User   `json:"user"`
-	Tenant Tenant `json:"tenant"`
+	Token    string    `json:"token"`
+	User     User      `json:"user"`
+	Tenant   Tenant    `json:"tenant"`
+	TenantID uuid.UUID `json:"tenant_id"`
+}
+
+type UpdateTenantSettingsRequest struct {
+	Name    string           `json:"name" binding:"required"`
+	Phone   *string          `json:"phone,omitempty"`
+	Address *string          `json:"address,omitempty"`
+	About   *json.RawMessage `json:"about,omitempty"`
 }
 
 type TenantUsecase interface {
 	RegisterTenant(ctx context.Context, req *RegisterTenantRequest) (*RegisterTenantResponse, error)
+	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
+	UpdateTenantSettings(ctx context.Context, id uuid.UUID, req *UpdateTenantSettingsRequest) (*Tenant, error)
 }

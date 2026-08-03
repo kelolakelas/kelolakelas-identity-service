@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 )
 
@@ -42,7 +41,8 @@ type LoginPayload struct {
 // @Accept json
 // @Produce json
 // @Param request body RegisterPayload true "Register payload"
-// @Success 201 {object} domain.HTTPResponse{data=domain.User}
+// @Description Registration does not auto-login. The client must call /auth/login after registration.
+// @Success 201 {object} domain.HTTPResponse{data=domain.AuthUserResponse}
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 409 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
@@ -86,8 +86,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
-		"message": "User registered successfully",
-		"data":    createdUser,
+		"message": "User registered successfully; please log in",
+		"data":    domain.AuthUserResponse{ID: createdUser.ID, Email: createdUser.Email, FirstName: createdUser.FirstName, LastName: createdUser.LastName, IsParent: createdUser.IsParent},
 	})
 }
 
@@ -114,7 +114,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, user, err := h.authUsecase.Login(c.Request.Context(), payload.Email, payload.Password)
+	token, user, tenantID, err := h.authUsecase.Login(c.Request.Context(), payload.Email, payload.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{
@@ -136,8 +136,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"status":  "success",
 		"message": "Logged in successfully",
 		"data": gin.H{
-			"token": token,
-			"user":  user,
+			"token":     token,
+			"user":      domain.AuthUserResponse{ID: user.ID, Email: user.Email, FirstName: user.FirstName, LastName: user.LastName, IsParent: user.IsParent, TenantID: tenantID},
+			"tenant_id": tenantID,
 		},
 	})
 }

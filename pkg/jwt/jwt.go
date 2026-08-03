@@ -18,6 +18,8 @@ type Claims struct {
 	Email    string    `json:"email"`
 	TenantID uuid.UUID `json:"tenant_id,omitempty"`
 	RoleID   uuid.UUID `json:"role_id,omitempty"`
+	MemberID uuid.UUID `json:"member_id,omitempty"`
+	IsParent bool      `json:"is_parent,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -33,12 +35,14 @@ func NewJWTService(secretKey string, duration time.Duration) *JWTService {
 	}
 }
 
-func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID uuid.UUID, roleID uuid.UUID) (string, error) {
+func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID, roleID, memberID uuid.UUID, isParent bool) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Email:    email,
 		TenantID: tenantID,
 		RoleID:   roleID,
+		MemberID: memberID,
+		IsParent: isParent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.tokenDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
