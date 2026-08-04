@@ -114,7 +114,9 @@ func SeedPermissions(db *gorm.DB) error {
 			return fmt.Errorf("error checking permission %s: %w", seed.Name, err)
 		} else {
 			if perm.Description != seed.Description {
-				db.Model(&perm).Update("description", seed.Description)
+				if err := db.Model(&perm).Update("description", seed.Description).Error; err != nil {
+					return fmt.Errorf("failed to update permission %s: %w", seed.Name, err)
+				}
 			}
 		}
 	}
@@ -153,7 +155,9 @@ func SeedSystemRoles(db *gorm.DB) error {
 			RoleID:       creatorRole.ID,
 			PermissionID: perm.ID,
 		}
-		db.Clauses(clause.OnConflict{DoNothing: true}).Create(&rp)
+		if err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&rp).Error; err != nil {
+			return fmt.Errorf("failed to assign permission %s to system role: %w", perm.Name, err)
+		}
 	}
 
 	slog.Info("System default roles seeded successfully")

@@ -24,6 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	slog.Info("Running auto-migration...")
+	if err := database.Migrate(db); err != nil {
+		slog.Error("Auto-migration failed", "error", err)
+		os.Exit(1)
+	}
+
 	slog.Info("Starting database seeding process...")
 	if err := database.SeedAll(db); err != nil {
 		slog.Error("Seeding failed", "error", err)

@@ -16,7 +16,6 @@ import (
 	idgrpc "github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/grpc"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/http/handler"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/delivery/http/middleware"
-	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/repository"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/usecase"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
@@ -53,23 +52,7 @@ func main() {
 
 	// Auto-migrate schema
 	slog.Info("Running auto-migration...")
-	if err := db.AutoMigrate(
-		&domain.User{},
-		&domain.Tenant{},
-		&domain.TenantMember{},
-		&domain.Role{},
-		&domain.Permission{},
-		&domain.RolePermission{},
-		&domain.TenantInvitation{},
-		&domain.TenantWallet{},
-		&domain.UserWallet{},
-		&domain.TenantBankAccount{},
-		&domain.UserBankAccount{},
-		&domain.TenantLedgerEntry{},
-		&domain.UserLedgerEntry{},
-		&domain.TenantWithdrawal{},
-		&domain.UserWithdrawal{},
-	); err != nil {
+	if err := database.Migrate(db); err != nil {
 		slog.Error("Auto-migration failed", "error", err)
 		os.Exit(1)
 	}
@@ -77,6 +60,7 @@ func main() {
 	// Seed default permissions and system roles
 	if err := database.SeedAll(db); err != nil {
 		slog.Error("Seeding default permissions failed", "error", err)
+		os.Exit(1)
 	}
 
 	// Initialize Redis
