@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// Initialize DB
-	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode)
+	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode, cfg.DBChannelBinding)
 	if err != nil {
 		slog.Error("Database connection failed", "error", err)
 		os.Exit(1)
@@ -81,7 +81,7 @@ func main() {
 
 	// Initialize Redis
 	var redisService *database.RedisService
-	rdb, err := database.NewRedisClient(cfg.RedisHost, cfg.RedisPort, cfg.RedisPassword)
+	rdb, err := database.NewRedisClient(cfg.RedisHost, cfg.RedisPort, cfg.RedisUsername, cfg.RedisPassword, cfg.RedisTLS, cfg.RedisDB)
 	if err != nil {
 		slog.Warn("Redis connection failed (optional/non-blocking)", "error", err)
 	} else if rdb != nil {

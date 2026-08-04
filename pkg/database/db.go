@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"time"
@@ -11,8 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewPostgresDB(host, port, user, password, dbname, sslMode string) (*gorm.DB, error) {
-	dsn := buildPostgresDSN(host, port, user, password, dbname, sslMode)
+func NewPostgresDB(host, port, user, password, dbname, sslMode, channelBinding string) (*gorm.DB, error) {
+	dsn := buildPostgresDSN(host, port, user, password, dbname, sslMode, channelBinding)
 
 	slog.Info("Connecting to PostgreSQL", "dsn", fmt.Sprintf("host=%s user=%s dbname=%s port=%s", host, user, dbname, port))
 
@@ -34,20 +35,16 @@ func NewPostgresDB(host, port, user, password, dbname, sslMode string) (*gorm.DB
 	return db, nil
 }
 
-func buildPostgresDSN(host, port, user, password, dbname, sslMode string) string {
-	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
-		host, user, password, dbname, port, sslMode)
+func buildPostgresDSN(host, port, user, password, dbname, sslMode, channelBinding string) string {
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s channel_binding=%s TimeZone=UTC",
+		host, user, password, dbname, port, sslMode, channelBinding)
 }
 
-func NewRedisClient(host, port, password string) (*redis.Client, error) {
+func NewRedisClient(host, port, username, password string, tlsEnabled bool, db int) (*redis.Client, error) {
 	addr := fmt.Sprintf("%s:%s", host, port)
 	slog.Info("Connecting to Redis", "addr", addr)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       0, // use default DB
-	})
+	rdb := redis.NewClient(buildRedisOptions(host, port, username, password, tlsEnabled, db))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -57,4 +54,21 @@ func NewRedisClient(host, port, password string) (*redis.Client, error) {
 	}
 
 	return rdb, nil
+}
+
+func buildRedisOptions(host, port, username, password string, tlsEnabled bool, db int) *redis.Options {
+	return &redis.Options{
+		Addr:      fmt.Sprintf("%s:%s", host, port),
+		Username:  username,
+		Password:  password,
+		DB:        db,
+		TLSConfig: redisTLSConfig(tlsEnabled),
+	}
+}
+
+func redisTLSConfig(enabled bool) *tls.Config {
+	if !enabled {
+		return nil
+	}
+	return &tls.Config{MinVersion: tls.VersionTLS12}
 }
