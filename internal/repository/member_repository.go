@@ -20,7 +20,7 @@ func (r *memberRepository) GetByID(ctx context.Context, tenantID, memberID uuid.
 	var row memberRow
 	query := r.db.WithContext(ctx).Table("tenant_members tm").
 		Joins("JOIN users u ON u.id = tm.user_id").Joins("JOIN roles ro ON ro.id = tm.role_id").
-		Where("tm.tenant_id = ? AND tm.id = ?", tenantID, memberID).
+		Where("tm.tenant_id = ? AND tm.id = ? AND tm.deleted_at IS NULL", tenantID, memberID).
 		Select("tm.id, tm.user_id, tm.tenant_id, u.email, u.first_name, u.last_name, u.phone, CASE WHEN tm.is_active THEN 'active' ELSE 'inactive' END AS status, ro.id AS role_id, ro.name AS role_name, (ro.tenant_id IS NULL) AS is_system_role, tm.joined_at AS created_at, tm.updated_at").First(&row)
 	if errors.Is(query.Error, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrMemberNotFound
@@ -29,6 +29,19 @@ func (r *memberRepository) GetByID(ctx context.Context, tenantID, memberID uuid.
 		return nil, query.Error
 	}
 	return &domain.MemberResponse{ID: row.ID, UserID: row.UserID, TenantID: row.TenantID, Email: row.Email, FirstName: row.FirstName, LastName: row.LastName, Phone: row.Phone, Status: row.Status, Role: domain.MemberRoleResponse{ID: row.RoleID, Name: row.RoleName, IsSystemRole: row.IsSystemRole}, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}, nil
+}
+
+func (r *memberRepository) Delete(ctx context.Context, tenantID, memberID uuid.UUID) error {
+	result := r.db.WithContext(ctx).
+		Where("id = ? AND tenant_id = ?", memberID, tenantID).
+		Delete(&domain.TenantMember{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrMemberNotFound
+	}
+	return nil
 }
 
 func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID) (*domain.MemberResponse, error) {
@@ -71,7 +84,7 @@ func (r *memberRepository) HasPermission(ctx context.Context, roleID uuid.UUID, 
 func (r *memberRepository) ListTutors(ctx context.Context, tenantID uuid.UUID, query domain.TutorQuery) ([]domain.TutorResponse, int64, error) {
 	db := r.db.WithContext(ctx).Table("tenant_members tm").
 		Joins("JOIN users u ON u.id = tm.user_id").Joins("JOIN roles ro ON ro.id = tm.role_id").
-		Where("tm.tenant_id = ? AND tm.is_active = ?", tenantID, true).
+		Where("tm.tenant_id = ? AND tm.is_active = ? AND tm.deleted_at IS NULL", tenantID, true).
 		Where("LOWER(ro.name) IN ?", []string{"teacher", "tutor", "pengajar"})
 	if query.Status == "inactive" {
 		db = db.Where("1 = 0")
@@ -122,7 +135,7 @@ func (r *memberRepository) List(ctx context.Context, tenantID uuid.UUID, query d
 	base := r.db.WithContext(ctx).Table("tenant_members tm").
 		Joins("JOIN users u ON u.id = tm.user_id").
 		Joins("JOIN roles ro ON ro.id = tm.role_id").
-		Where("tm.tenant_id = ?", tenantID)
+		Where("tm.tenant_id = ? AND tm.deleted_at IS NULL", tenantID)
 
 	if query.Search != "" {
 		like := "%" + query.Search + "%"
@@ -142,7 +155,7 @@ func (r *memberRepository) List(ctx context.Context, tenantID uuid.UUID, query d
 		return nil, 0, err
 	}
 
-	orderColumn := map[string]string{"created_at": "tm.created_at", "updated_at": "tm.updated_at", "email": "u.email", "name": "u.last_name"}[query.Sort]
+	orderColumn := map[string]string{"created_at": "tm.joined_at", "joined_at": "tm.joined_at", "updated_at": "tm.updated_at", "email": "u.email", "name": "u.last_name"}[query.Sort]
 	if orderColumn == "" {
 		orderColumn = "tm.created_at"
 	}

@@ -50,6 +50,17 @@ func (u *memberUsecase) UpdateRole(ctx context.Context, tenantID, callerRoleID, 
 	return u.repo.UpdateRole(ctx, tenantID, memberID, roleID)
 }
 
+func (u *memberUsecase) Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error {
+	allowed, err := u.repo.HasPermission(ctx, callerRoleID, "member:delete")
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return domain.ErrMemberDeletePermission
+	}
+	return u.repo.Delete(ctx, tenantID, memberID)
+}
+
 func (u *memberUsecase) ListTutors(ctx context.Context, tenantID uuid.UUID, query domain.TutorQuery) (*domain.TutorListResponse, error) {
 	if query.Page < 1 {
 		query.Page = 1

@@ -11,6 +11,7 @@ import (
 type Config struct {
 	DBHost          string `mapstructure:"DB_HOST"`
 	DBPort          string `mapstructure:"DB_PORT"`
+	DBSSLMode       string `mapstructure:"DB_SSLMODE"`
 	DBUser          string `mapstructure:"DB_USER"`
 	DBPassword      string `mapstructure:"DB_PASSWORD"`
 	DBName          string `mapstructure:"DB_NAME"`
@@ -19,6 +20,7 @@ type Config struct {
 	RedisPassword   string `mapstructure:"REDIS_PASSWORD"`
 	JWTSecret       string `mapstructure:"JWT_SECRET"`
 	Port            string `mapstructure:"PORT"`
+	AppURL          string `mapstructure:"APP_URL"`
 	ResendAPIKey    string `mapstructure:"RESEND_API_KEY"`
 	ResendFromEmail string `mapstructure:"RESEND_FROM_EMAIL"`
 }
@@ -39,6 +41,9 @@ func LoadConfig() (Config, error) {
 	}
 
 	viper.AutomaticEnv()
+	if err := viper.BindEnv("DB_SSLMODE"); err != nil {
+		return Config{}, err
+	}
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
@@ -51,6 +56,12 @@ func LoadConfig() (Config, error) {
 	}
 	if config.Port == "" {
 		config.Port = "8080"
+	}
+	if config.DBSSLMode == "" {
+		config.DBSSLMode = "disable"
+	}
+	if config.AppURL == "" {
+		config.AppURL = "http://localhost:3000"
 	}
 
 	return config, nil

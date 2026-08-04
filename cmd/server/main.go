@@ -3,7 +3,6 @@ package main
 import (
 	"log/slog"
 	"net"
-	"net/http"
 	"os"
 	"time"
 
@@ -46,7 +45,7 @@ func main() {
 	}
 
 	// Initialize DB
-	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode)
 	if err != nil {
 		slog.Error("Database connection failed", "error", err)
 		os.Exit(1)
@@ -94,7 +93,7 @@ func main() {
 	jwtService := jwt.NewJWTService(cfg.JWTSecret, 24*time.Hour)
 
 	// Initialize Services, Repositories & Usecases
-	emailService := email.NewResendEmailService(cfg.ResendAPIKey, cfg.ResendFromEmail)
+	emailService := email.NewResendEmailService(cfg.ResendAPIKey, cfg.ResendFromEmail, cfg.AppURL)
 
 	userRepo := repository.NewUserRepository(db)
 	tenantRepo := repository.NewTenantRepository(db)
@@ -119,12 +118,7 @@ func main() {
 	r.Use(gin.Recovery())
 
 	// Health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "healthy",
-			"service": "identity-service",
-		})
-	})
+	r.GET("/health", healthHandler("identity-service"))
 
 	// Swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -148,6 +142,7 @@ func main() {
 			protected.GET("/tutors", memberHandler.ListTutors)
 			protected.GET("/members/:id", memberHandler.GetMember)
 			protected.PUT("/members/:id/role", memberHandler.UpdateMemberRole)
+			protected.DELETE("/members/:id", memberHandler.DeleteMember)
 			protected.GET("/tenant/settings", tenantHandler.GetSettings)
 			protected.PATCH("/tenant/settings", tenantHandler.UpdateSettings)
 			protected.GET("/tenants/settings", tenantHandler.GetSettings)

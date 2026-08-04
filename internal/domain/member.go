@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	ErrMemberNotFound      = errors.New("member not found")
-	ErrMemberRoleForbidden = errors.New("member role cannot be changed")
-	ErrMemberRoleConflict  = errors.New("role does not belong to tenant")
-	ErrMemberPermission    = errors.New("member role update permission required")
+	ErrMemberNotFound         = errors.New("member not found")
+	ErrMemberRoleForbidden    = errors.New("member role cannot be changed")
+	ErrMemberRoleConflict     = errors.New("role does not belong to tenant")
+	ErrMemberPermission       = errors.New("member role update permission required")
+	ErrMemberDeletePermission = errors.New("member delete permission required")
 )
 
 type MemberQuery struct {
@@ -86,6 +87,7 @@ type MemberRepository interface {
 	List(ctx context.Context, tenantID uuid.UUID, query MemberQuery) ([]MemberResponse, int64, error)
 	GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*MemberResponse, error)
 	UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID) (*MemberResponse, error)
+	Delete(ctx context.Context, tenantID, memberID uuid.UUID) error
 	HasPermission(ctx context.Context, roleID uuid.UUID, permission string) (bool, error)
 	ListTutors(ctx context.Context, tenantID uuid.UUID, query TutorQuery) ([]TutorResponse, int64, error)
 }
@@ -94,5 +96,6 @@ type MemberUsecase interface {
 	List(ctx context.Context, tenantID uuid.UUID, query MemberQuery) (*MemberListResponse, error)
 	GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*MemberResponse, error)
 	UpdateRole(ctx context.Context, tenantID, callerRoleID, memberID, roleID uuid.UUID) (*MemberResponse, error)
+	Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error
 	ListTutors(ctx context.Context, tenantID uuid.UUID, query TutorQuery) (*TutorListResponse, error)
 }

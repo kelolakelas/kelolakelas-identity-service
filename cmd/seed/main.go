@@ -18,7 +18,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode)
 	if err != nil {
 		slog.Error("Database connection failed", "error", err)
 		os.Exit(1)

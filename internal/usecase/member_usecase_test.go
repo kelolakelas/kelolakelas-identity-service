@@ -11,10 +11,12 @@ import (
 )
 
 type memberRepositoryStub struct {
-	items []domain.MemberResponse
-	total int64
-	err   error
-	query domain.MemberQuery
+	items   []domain.MemberResponse
+	total   int64
+	err     error
+	query   domain.MemberQuery
+	allowed bool
+	deleted bool
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -30,12 +32,47 @@ func (s *memberRepositoryStub) UpdateRole(context.Context, uuid.UUID, uuid.UUID,
 	return nil, s.err
 }
 
+func (s *memberRepositoryStub) Delete(context.Context, uuid.UUID, uuid.UUID) error {
+	s.deleted = true
+	return s.err
+}
+
 func (s *memberRepositoryStub) HasPermission(context.Context, uuid.UUID, string) (bool, error) {
-	return true, s.err
+	return s.allowed, s.err
 }
 
 func (s *memberRepositoryStub) ListTutors(context.Context, uuid.UUID, domain.TutorQuery) ([]domain.TutorResponse, int64, error) {
 	return nil, 0, s.err
+}
+
+func TestMemberUsecaseDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		allowed       bool
+		err           error
+		expectDeleted bool
+		expectErr     error
+	}{
+		{name: "deletes with permission", allowed: true, expectDeleted: true},
+		{name: "rejects without permission", expectErr: domain.ErrMemberDeletePermission},
+		{name: "returns permission lookup error", err: errors.New("permission lookup failed"), expectErr: errors.New("permission lookup failed")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			stub := &memberRepositoryStub{allowed: test.allowed, err: test.err}
+			err := NewMemberUsecase(stub).Delete(context.Background(), uuid.New(), uuid.New(), uuid.New())
+			if test.expectErr != nil {
+				if err == nil || err.Error() != test.expectErr.Error() {
+					t.Fatalf("error = %v, want %v", err, test.expectErr)
+				}
+			} else if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if stub.deleted != test.expectDeleted {
+				t.Fatalf("deleted = %v, want %v", stub.deleted, test.expectDeleted)
+			}
+		})
+	}
 }
 
 func TestMemberUsecaseList(t *testing.T) {

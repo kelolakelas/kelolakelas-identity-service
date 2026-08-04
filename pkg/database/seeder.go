@@ -126,16 +126,16 @@ func SeedPermissions(db *gorm.DB) error {
 func SeedSystemRoles(db *gorm.DB) error {
 	slog.Info("Seeding system default roles...")
 
-	var adminRole domain.Role
-	err := db.Where("name = ? AND tenant_id IS NULL", "Admin").First(&adminRole).Error
+	var creatorRole domain.Role
+	err := db.Where("name = ? AND tenant_id IS NULL", "Creator").First(&creatorRole).Error
 	if err == gorm.ErrRecordNotFound {
-		adminRole = domain.Role{
+		creatorRole = domain.Role{
 			ID:          uuid.New(),
 			TenantID:    nil,
 			Name:        "Creator",
 			Description: "System Default Creator Role (Full Access)",
 		}
-		if err := db.Create(&adminRole).Error; err != nil {
+		if err := db.Create(&creatorRole).Error; err != nil {
 			return fmt.Errorf("failed to seed Admin system role: %w", err)
 		}
 		slog.Info("Created system default Admin role")
@@ -150,7 +150,7 @@ func SeedSystemRoles(db *gorm.DB) error {
 
 	for _, perm := range allPermissions {
 		rp := domain.RolePermission{
-			RoleID:       adminRole.ID,
+			RoleID:       creatorRole.ID,
 			PermissionID: perm.ID,
 		}
 		db.Clauses(clause.OnConflict{DoNothing: true}).Create(&rp)

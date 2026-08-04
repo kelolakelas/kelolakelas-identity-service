@@ -70,7 +70,7 @@ func NewMemberHandler(usecase domain.MemberUsecase) *MemberHandler {
 // @Param search query string false "Search email or name"
 // @Param status query string false "active or inactive"
 // @Param role_id query string false "Role UUID"
-// @Param sort query string false "created_at, updated_at, email, or name"
+// @Param sort query string false "joined_at, updated_at, email, or name"
 // @Param order query string false "asc or desc"
 // @Success 200 {object} domain.HTTPResponse{data=domain.MemberListResponse}
 // @Failure 400 {object} domain.ErrorResponse
@@ -206,4 +206,50 @@ func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Member role updated successfully", "data": member})
+}
+
+// DeleteMember godoc
+// @Summary Remove a tenant member
+// @Description Soft delete a member from the active tenant.
+// @Tags Members
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Member UUID"
+// @Success 200 {object} domain.HTTPResponse
+// @Failure 400,401,403,404,500 {object} domain.ErrorResponse
+// @Router /api/v1/members/{id} [delete]
+func (h *MemberHandler) DeleteMember(c *gin.Context) {
+	tenantID, err := extractTenantID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		return
+	}
+	memberID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid member ID", "data": nil})
+		return
+	}
+	callerRole, ok := c.Get("role_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "Role context required", "data": nil})
+		return
+	}
+	callerRoleID, ok := callerRole.(uuid.UUID)
+	if !ok || callerRoleID == uuid.Nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "Invalid role context", "data": nil})
+		return
+	}
+	err = h.usecase.Delete(c.Request.Context(), tenantID, callerRoleID, memberID)
+	status, message := http.StatusInternalServerError, "Failed to remove member"
+	if errors.Is(err, domain.ErrMemberDeletePermission) {
+		status, message = http.StatusForbidden, "Permission denied"
+	}
+	if errors.Is(err, domain.ErrMemberNotFound) {
+		status, message = http.StatusNotFound, "Member not found"
+	}
+	if err != nil {
+		c.JSON(status, gin.H{"status": "error", "message": message, "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Member removed successfully", "data": nil})
 }

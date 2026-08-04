@@ -655,6 +655,46 @@ paths:
       summary: Get tenant member
       tags:
       - Members
+    delete:
+      description: Soft delete a member from the active tenant.
+      parameters:
+      - description: Member UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove a tenant member
+      tags:
+      - Members
   /api/v1/members/{id}/role:
     put:
       consumes:
