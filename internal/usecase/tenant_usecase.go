@@ -11,6 +11,7 @@ import (
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/hash"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/maps"
 )
 
 type tenantUsecase struct {
@@ -18,15 +19,69 @@ type tenantUsecase struct {
 	tenantRepo   repository.TenantRepository
 	jwtService   *jwt.JWTService
 	redisService *database.RedisService
+	mapsClient   maps.MapsClient
 }
 
-func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, jwtService *jwt.JWTService, redisService *database.RedisService) domain.TenantUsecase {
+func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, jwtService *jwt.JWTService, redisService *database.RedisService, mapsClient maps.MapsClient) domain.TenantUsecase {
 	return &tenantUsecase{
 		userRepo:     userRepo,
 		tenantRepo:   tenantRepo,
 		jwtService:   jwtService,
 		redisService: redisService,
+		mapsClient:   mapsClient,
 	}
+}
+
+func (u *tenantUsecase) GetTenantLocation(ctx context.Context, id uuid.UUID) (*domain.TenantLocation, error) {
+	tenant, err := u.tenantRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.TenantLocation{Address: valueOrEmpty(tenant.Address), AddressFormatted: tenant.AddressFormatted, Latitude: tenant.Latitude, Longitude: tenant.Longitude, GooglePlaceID: tenant.GooglePlaceID, LocationAccuracyMeters: tenant.LocationAccuracy, LocationUpdatedAt: tenant.LocationUpdatedAt}, nil
+}
+
+func (u *tenantUsecase) UpdateTenantLocation(ctx context.Context, id uuid.UUID, req *domain.UpdateTenantLocationRequest) (*domain.TenantLocation, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	tenant, err := u.tenantRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	formatted := req.Address
+	latitude, longitude := req.Latitude, req.Longitude
+	placeID := req.GooglePlaceID
+	if latitude == nil && u.mapsClient != nil {
+		geocoded, geoErr := u.mapsClient.Geocode(ctx, req.Address)
+		if geoErr != nil {
+			return nil, geoErr
+		}
+		latitude, longitude = &geocoded.Latitude, &geocoded.Longitude
+		formatted, placeID = geocoded.FormattedAddress, stringPtr(geocoded.PlaceID)
+	}
+	now := time.Now().UTC()
+	tenant.Address = &req.Address
+	tenant.AddressFormatted = &formatted
+	tenant.Latitude, tenant.Longitude = latitude, longitude
+	tenant.GooglePlaceID = placeID
+	tenant.LocationUpdatedAt = &now
+	if err := u.tenantRepo.Update(ctx, tenant); err != nil {
+		return nil, err
+	}
+	return u.GetTenantLocation(ctx, id)
+}
+
+func valueOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+func stringPtr(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.RegisterTenantRequest) (*domain.RegisterTenantResponse, error) {
@@ -103,10 +158,15 @@ func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id uuid.UUID, 
 	if err != nil {
 		return nil, err
 	}
+	addressChanged := valueOrEmpty(tenant.Address) != valueOrEmpty(req.Address)
 	tenant.Name = req.Name
 	tenant.Phone = req.Phone
 	tenant.Address = req.Address
 	tenant.About = req.About
+	if addressChanged {
+		now := time.Now().UTC()
+		tenant.LocationUpdatedAt = &now
+	}
 	if err := u.tenantRepo.Update(ctx, tenant); err != nil {
 		return nil, err
 	}

@@ -55,3 +55,31 @@ func (s *TenantServiceServer) ValidateTenantStatus(ctx context.Context, req *pb.
 		Message:  "Tenant is active",
 	}, nil
 }
+
+func (s *TenantServiceServer) GetTenantPublicInfo(ctx context.Context, req *pb.TenantPublicInfoRequest) (*pb.TenantPublicInfoResponse, error) {
+	ids := make([]uuid.UUID, 0, len(req.GetTenantIds()))
+	for _, value := range req.GetTenantIds() {
+		id, err := uuid.Parse(value)
+		if err == nil {
+			ids = append(ids, id)
+		}
+	}
+	var tenants []domain.Tenant
+	if len(ids) > 0 {
+		if err := s.db.WithContext(ctx).Where("id IN ?", ids).Find(&tenants).Error; err != nil {
+			return nil, err
+		}
+	}
+	response := &pb.TenantPublicInfoResponse{Tenants: make([]*pb.TenantPublicInfo, 0, len(tenants))}
+	for _, tenant := range tenants {
+		info := &pb.TenantPublicInfo{TenantId: tenant.ID.String(), Name: tenant.Name, IsActive: tenant.Status == "active"}
+		if tenant.AddressFormatted != nil {
+			info.AddressFormatted = *tenant.AddressFormatted
+		}
+		if tenant.Latitude != nil && tenant.Longitude != nil {
+			info.Latitude, info.Longitude, info.HasLocation = *tenant.Latitude, *tenant.Longitude, true
+		}
+		response.Tenants = append(response.Tenants, info)
+	}
+	return response, nil
+}

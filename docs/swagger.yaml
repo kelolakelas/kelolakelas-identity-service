@@ -178,12 +178,24 @@ definitions:
         type: array
       address:
         type: string
+      address_formatted:
+        type: string
       created_at:
         type: string
       deleted_at:
         $ref: '#/definitions/gorm.DeletedAt'
+      google_place_id:
+        type: string
       id:
         type: string
+      latitude:
+        type: number
+      location_accuracy_meters:
+        type: number
+      location_updated_at:
+        type: string
+      longitude:
+        type: number
       name:
         type: string
       payment_account_id:
@@ -215,6 +227,23 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation:
+    properties:
+      address:
+        type: string
+      address_formatted:
+        type: string
+      google_place_id:
+        type: string
+      latitude:
+        type: number
+      location_accuracy_meters:
+        type: number
+      location_updated_at:
+        type: string
+      longitude:
+        type: number
     type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorListResponse:
     properties:
@@ -258,6 +287,20 @@ definitions:
     required:
     - name
     - permission_ids
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantLocationRequest:
+    properties:
+      address:
+        maxLength: 500
+        type: string
+      google_place_id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - address
     type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantSettingsRequest:
     properties:
@@ -597,7 +640,7 @@ paths:
         in: query
         name: role_id
         type: string
-      - description: created_at, updated_at, email, or name
+      - description: joined_at, updated_at, email, or name
         in: query
         name: sort
         type: string
@@ -631,30 +674,6 @@ paths:
       tags:
       - Members
   /api/v1/members/{id}:
-    get:
-      parameters:
-      - description: Member UUID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Get tenant member
-      tags:
-      - Members
     delete:
       description: Soft delete a member from the active tenant.
       parameters:
@@ -693,6 +712,30 @@ paths:
       security:
       - BearerAuth: []
       summary: Remove a tenant member
+      tags:
+      - Members
+    get:
+      parameters:
+      - description: Member UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get tenant member
       tags:
       - Members
   /api/v1/members/{id}/role:
@@ -1054,6 +1097,76 @@ paths:
       security:
       - BearerAuth: []
       summary: Update tenant settings
+      tags:
+      - Tenant Settings
+  /api/v1/tenant/settings/location:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tenant location
+      tags:
+      - Tenant Settings
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant location payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update tenant location
       tags:
       - Tenant Settings
   /api/v1/tenants/register:

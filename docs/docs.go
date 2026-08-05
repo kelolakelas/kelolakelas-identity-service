@@ -393,7 +393,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "created_at, updated_at, email, or name",
+                        "description": "joined_at, updated_at, email, or name",
                         "name": "sort",
                         "in": "query"
                     },
@@ -488,6 +488,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Soft delete a member from the active tenant.",
                 "produces": [
                     "application/json"
                 ],
@@ -495,7 +496,6 @@ const docTemplate = `{
                     "Members"
                 ],
                 "summary": "Remove a tenant member",
-                "description": "Soft delete a member from the active tenant.",
                 "parameters": [
                     {
                         "type": "string",
@@ -1136,6 +1136,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/tenant/settings/location": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tenant Settings"
+                ],
+                "summary": "Get tenant location",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tenant Settings"
+                ],
+                "summary": "Update tenant location",
+                "parameters": [
+                    {
+                        "description": "Tenant location payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantLocationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/tenants/register": {
             "post": {
                 "description": "Register a new tenant organization along with its initial owner user",
@@ -1670,14 +1790,32 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
+                "address_formatted": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "deleted_at": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
+                "google_place_id": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "location_accuracy_meters": {
+                    "type": "number"
+                },
+                "location_updated_at": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"
@@ -1725,6 +1863,32 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantLocation": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "address_formatted": {
+                    "type": "string"
+                },
+                "google_place_id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "location_accuracy_meters": {
+                    "type": "number"
+                },
+                "location_updated_at": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
                 }
             }
         },
@@ -1791,6 +1955,27 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.UpdateTenantLocationRequest": {
+            "type": "object",
+            "required": [
+                "address"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "google_place_id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
                 }
             }
         },

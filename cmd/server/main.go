@@ -21,6 +21,7 @@ import (
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/email"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
+	"github.com/kelolakelas/kelolakelas-identity-service/pkg/maps"
 	pb "github.com/kelolakelas/kelolakelas-identity-service/pkg/proto/tenant"
 )
 
@@ -86,7 +87,8 @@ func main() {
 	memberRepo := repository.NewMemberRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
-	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, jwtService, redisService)
+	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
+	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, jwtService, redisService, mapsClient)
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, emailService)
 	roleUsecase := usecase.NewRoleUsecase(rbacRepo)
 	memberUsecase := usecase.NewMemberUsecase(memberRepo)
@@ -131,6 +133,8 @@ func main() {
 			protected.PATCH("/tenant/settings", tenantHandler.UpdateSettings)
 			protected.GET("/tenants/settings", tenantHandler.GetSettings)
 			protected.PATCH("/tenants/settings", tenantHandler.UpdateSettings)
+			protected.GET("/tenant/settings/location", tenantHandler.GetLocation)
+			protected.PUT("/tenant/settings/location", tenantHandler.UpdateLocation)
 
 			// Role & Permission routes
 			protected.GET("/permissions", roleHandler.GetPermissions)

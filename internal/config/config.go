@@ -13,25 +13,28 @@ import (
 )
 
 type Config struct {
-	DatabaseURL      string `mapstructure:"DATABASE_URL"`
-	DBHost           string `mapstructure:"DB_HOST"`
-	DBPort           string `mapstructure:"DB_PORT"`
-	DBSSLMode        string `mapstructure:"DB_SSLMODE"`
-	DBChannelBinding string `mapstructure:"DB_CHANNEL_BINDING"`
-	DBUser           string `mapstructure:"DB_USER"`
-	DBPassword       string `mapstructure:"DB_PASSWORD"`
-	DBName           string `mapstructure:"DB_NAME"`
-	RedisHost        string `mapstructure:"REDIS_HOST"`
-	RedisPort        string `mapstructure:"REDIS_PORT"`
-	RedisUsername    string `mapstructure:"REDIS_USERNAME"`
-	RedisPassword    string `mapstructure:"REDIS_PASSWORD"`
-	RedisTLS         bool   `mapstructure:"REDIS_TLS"`
-	RedisDB          int    `mapstructure:"REDIS_DB"`
-	JWTSecret        string `mapstructure:"JWT_SECRET"`
-	Port             string `mapstructure:"PORT"`
-	AppURL           string `mapstructure:"APP_URL"`
-	ResendAPIKey     string `mapstructure:"RESEND_API_KEY"`
-	ResendFromEmail  string `mapstructure:"RESEND_FROM_EMAIL"`
+	DatabaseURL                string `mapstructure:"DATABASE_URL"`
+	DBHost                     string `mapstructure:"DB_HOST"`
+	DBPort                     string `mapstructure:"DB_PORT"`
+	DBSSLMode                  string `mapstructure:"DB_SSLMODE"`
+	DBChannelBinding           string `mapstructure:"DB_CHANNEL_BINDING"`
+	DBUser                     string `mapstructure:"DB_USER"`
+	DBPassword                 string `mapstructure:"DB_PASSWORD"`
+	DBName                     string `mapstructure:"DB_NAME"`
+	RedisHost                  string `mapstructure:"REDIS_HOST"`
+	RedisPort                  string `mapstructure:"REDIS_PORT"`
+	RedisUsername              string `mapstructure:"REDIS_USERNAME"`
+	RedisPassword              string `mapstructure:"REDIS_PASSWORD"`
+	RedisTLS                   bool   `mapstructure:"REDIS_TLS"`
+	RedisDB                    int    `mapstructure:"REDIS_DB"`
+	JWTSecret                  string `mapstructure:"JWT_SECRET"`
+	Port                       string `mapstructure:"PORT"`
+	AppURL                     string `mapstructure:"APP_URL"`
+	ResendAPIKey               string `mapstructure:"RESEND_API_KEY"`
+	ResendFromEmail            string `mapstructure:"RESEND_FROM_EMAIL"`
+	GoogleMapsAPIKey           string `mapstructure:"GOOGLE_MAPS_API_KEY"`
+	GoogleMapsGeocodingEnabled bool   `mapstructure:"GOOGLE_MAPS_GEOCODING_ENABLED"`
+	GoogleMapsTimeoutSeconds   int    `mapstructure:"GOOGLE_MAPS_TIMEOUT_SECONDS"`
 }
 
 func LoadConfig() (Config, error) {
@@ -53,7 +56,7 @@ func LoadConfig() (Config, error) {
 	for _, key := range []string{
 		"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PORT", "APP_URL",
-		"RESEND_API_KEY", "RESEND_FROM_EMAIL",
+		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
 	} {
 		if err := viper.BindEnv(key); err != nil {
 			return Config{}, err
@@ -83,6 +86,8 @@ func LoadConfig() (Config, error) {
 	}
 	config.RedisTLS = parsedRedisTLS
 	config.RedisDB = parsedRedisDB
+	config.GoogleMapsGeocodingEnabled = viper.GetBool("GOOGLE_MAPS_GEOCODING_ENABLED")
+	config.GoogleMapsTimeoutSeconds = viper.GetInt("GOOGLE_MAPS_TIMEOUT_SECONDS")
 	if err := applyDatabaseURL(&config); err != nil {
 		return Config{}, err
 	}
@@ -123,6 +128,9 @@ func LoadConfig() (Config, error) {
 	}
 	if config.AppURL == "" {
 		config.AppURL = "http://localhost:3000"
+	}
+	if config.GoogleMapsTimeoutSeconds <= 0 {
+		config.GoogleMapsTimeoutSeconds = 5
 	}
 
 	return config, nil

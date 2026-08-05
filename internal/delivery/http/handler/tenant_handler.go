@@ -86,3 +86,64 @@ func (h *TenantHandler) UpdateSettings(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Tenant settings updated successfully", "data": tenant})
 }
+
+// GetLocation godoc
+// @Summary Get tenant location
+// @Tags Tenant Settings
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=domain.TenantLocation}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Router /api/v1/tenant/settings/location [get]
+func (h *TenantHandler) GetLocation(c *gin.Context) {
+	tenantID, ok := h.currentTenant(c)
+	if !ok {
+		return
+	}
+	location, err := h.usecase.GetTenantLocation(c.Request.Context(), tenantID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"status": "error", "message": "Failed to fetch tenant location", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Tenant location fetched successfully", "data": location})
+}
+
+// UpdateLocation godoc
+// @Summary Update tenant location
+// @Tags Tenant Settings
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body domain.UpdateTenantLocationRequest true "Tenant location payload"
+// @Success 200 {object} domain.HTTPResponse{data=domain.TenantLocation}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/tenant/settings/location [put]
+func (h *TenantHandler) UpdateLocation(c *gin.Context) {
+	tenantID, ok := h.currentTenant(c)
+	if !ok {
+		return
+	}
+	var req domain.UpdateTenantLocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Validate() != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid tenant location", "data": nil})
+		return
+	}
+	location, err := h.usecase.UpdateTenantLocation(c.Request.Context(), tenantID, &req)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"status": "error", "message": "Failed to update tenant location", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Tenant location updated successfully", "data": location})
+}
