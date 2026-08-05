@@ -36,8 +36,12 @@ func NewPostgresDB(host, port, user, password, dbname, sslMode, channelBinding s
 }
 
 func buildPostgresDSN(host, port, user, password, dbname, sslMode, channelBinding string) string {
-	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s channel_binding=%s TimeZone=UTC",
-		host, user, password, dbname, port, sslMode, channelBinding)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		host, user, password, dbname, port, sslMode)
+	if channelBinding != "" && channelBinding != "disable" {
+		dsn += fmt.Sprintf(" channel_binding=%s", channelBinding)
+	}
+	return dsn + " TimeZone=UTC"
 }
 
 func NewRedisClient(host, port, username, password string, tlsEnabled bool, db int) (*redis.Client, error) {
