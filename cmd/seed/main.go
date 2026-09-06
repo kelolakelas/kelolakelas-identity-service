@@ -1,27 +1,20 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"os"
 
-	"github.com/kelolakelas/kelolakelas-identity-service/internal/config"
-	"github.com/kelolakelas/kelolakelas-identity-service/pkg/database"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/migration"
 )
 
 func main() {
+	directory := flag.String("dir", "seeders", "seed directory")
+	file := flag.String("file", "", "optional seed file")
+	flag.Parse()
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		slog.Error("Failed to load configuration", "error", err)
-		os.Exit(1)
-	}
-	db, err := database.NewPostgresDB(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSSLMode, cfg.DBChannelBinding)
-	if err != nil {
-		slog.Error("Database connection failed", "error", err)
-		os.Exit(1)
-	}
-	if err := database.SeedAll(db); err != nil {
+	if err := migration.Seed(*directory, *file); err != nil {
 		slog.Error("Seeding failed", "error", err)
 		os.Exit(1)
 	}

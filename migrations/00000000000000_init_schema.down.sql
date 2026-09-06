@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS user_withdrawals;
+DROP TABLE IF EXISTS tenant_withdrawals;
+DROP TABLE IF EXISTS user_ledger_entries;
+DROP TABLE IF EXISTS tenant_ledger_entries;
+DROP TABLE IF EXISTS user_bank_accounts;
+DROP TABLE IF EXISTS tenant_bank_accounts;
+DROP TABLE IF EXISTS user_wallets;
+DROP TABLE IF EXISTS tenant_wallets;
+DROP TABLE IF EXISTS tenant_invitations;
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS tenant_members;
+DROP TABLE IF EXISTS permissions;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS tenants;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS seed_versions;

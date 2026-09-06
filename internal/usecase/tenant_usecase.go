@@ -37,7 +37,7 @@ func (u *tenantUsecase) GetTenantLocation(ctx context.Context, id uuid.UUID) (*d
 	if err != nil {
 		return nil, err
 	}
-	return &domain.TenantLocation{Address: valueOrEmpty(tenant.Address), AddressFormatted: tenant.AddressFormatted, Latitude: tenant.Latitude, Longitude: tenant.Longitude, GooglePlaceID: tenant.GooglePlaceID, LocationAccuracyMeters: tenant.LocationAccuracy, LocationUpdatedAt: tenant.LocationUpdatedAt}, nil
+	return &domain.TenantLocation{Address: valueOrEmpty(tenant.Address), AddressFormatted: tenant.AddressFormatted, Latitude: tenant.Latitude, Longitude: tenant.Longitude, GooglePlaceID: tenant.GooglePlaceID, LocationAccuracyMeters: tenant.LocationAccuracyMeters, LocationUpdatedAt: tenant.LocationUpdatedAt}, nil
 }
 
 func (u *tenantUsecase) UpdateTenantLocation(ctx context.Context, id uuid.UUID, req *domain.UpdateTenantLocationRequest) (*domain.TenantLocation, error) {

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -154,6 +155,7 @@ func files(directory, file string) ([]string, error) {
 	if len(result) == 0 {
 		return nil, errors.New("no seed SQL files found")
 	}
+	sort.Strings(result)
 	return result, nil
 }
 func directory(path string) (string, error) {

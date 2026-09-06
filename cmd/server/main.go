@@ -51,19 +51,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Auto-migrate schema
-	slog.Info("Running auto-migration...")
-	if err := database.Migrate(db); err != nil {
-		slog.Error("Auto-migration failed", "error", err)
-		os.Exit(1)
-	}
-
-	// Seed default permissions and system roles
-	if err := database.SeedAll(db); err != nil {
-		slog.Error("Seeding default permissions failed", "error", err)
-		os.Exit(1)
-	}
-
 	// Initialize Redis
 	var redisService *database.RedisService
 	rdb, err := database.NewRedisClient(cfg.RedisHost, cfg.RedisPort, cfg.RedisUsername, cfg.RedisPassword, cfg.RedisTLS, cfg.RedisDB)

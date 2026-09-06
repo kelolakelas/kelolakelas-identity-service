@@ -16,22 +16,22 @@ var (
 )
 
 type Tenant struct {
-	ID                uuid.UUID        `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Name              string           `gorm:"type:varchar(255);unique;not null" json:"name"`
-	Phone             *string          `gorm:"type:varchar(50)" json:"phone,omitempty"`
-	Address           *string          `gorm:"type:text" json:"address,omitempty"`
-	AddressFormatted  *string          `gorm:"type:varchar(500)" json:"address_formatted,omitempty"`
-	Latitude          *float64         `gorm:"type:decimal(10,7)" json:"latitude,omitempty"`
-	Longitude         *float64         `gorm:"type:decimal(10,7)" json:"longitude,omitempty"`
-	GooglePlaceID     *string          `gorm:"type:varchar(255)" json:"google_place_id,omitempty"`
-	LocationAccuracy  *float64         `gorm:"type:decimal" json:"location_accuracy_meters,omitempty"`
-	LocationUpdatedAt *time.Time       `gorm:"type:timestamp" json:"location_updated_at,omitempty"`
-	About             *json.RawMessage `gorm:"type:jsonb;serializer:json" json:"about,omitempty"`
-	PaymentAccountID  *string          `gorm:"type:varchar(255);unique" json:"payment_account_id,omitempty"`
-	Status            string           `gorm:"type:varchar(50);default:'active'" json:"status"`
-	CreatedAt         time.Time        `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
-	UpdatedAt         time.Time        `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
-	DeletedAt         gorm.DeletedAt   `gorm:"index" json:"deleted_at,omitempty"`
+	ID                     uuid.UUID        `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name                   string           `gorm:"type:varchar(255);unique;not null" json:"name"`
+	Phone                  *string          `gorm:"type:varchar(50)" json:"phone,omitempty"`
+	Address                *string          `gorm:"type:text" json:"address,omitempty"`
+	AddressFormatted       *string          `gorm:"type:varchar(500)" json:"address_formatted,omitempty"`
+	Latitude               *float64         `gorm:"type:decimal(10,7)" json:"latitude,omitempty"`
+	Longitude              *float64         `gorm:"type:decimal(10,7)" json:"longitude,omitempty"`
+	GooglePlaceID          *string          `gorm:"type:varchar(255)" json:"google_place_id,omitempty"`
+	LocationAccuracyMeters *float64         `gorm:"type:decimal" json:"location_accuracy_meters,omitempty"`
+	LocationUpdatedAt      *time.Time       `gorm:"type:timestamp" json:"location_updated_at,omitempty"`
+	About                  *json.RawMessage `gorm:"type:jsonb;serializer:json" json:"about,omitempty"`
+	PaymentAccountID       *string          `gorm:"type:varchar(255);unique" json:"payment_account_id,omitempty"`
+	Status                 string           `gorm:"type:varchar(50);default:'active'" json:"status"`
+	CreatedAt              time.Time        `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
+	UpdatedAt              time.Time        `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
+	DeletedAt              gorm.DeletedAt   `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 type TenantLocation struct {
