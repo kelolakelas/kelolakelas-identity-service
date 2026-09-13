@@ -51,6 +51,7 @@ func TestLoadConfig(t *testing.T) {
 			for _, key := range []string{"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME", "REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "PORT"} {
 				t.Setenv(key, "")
 			}
+			t.Setenv("JWT_SECRET", "test-jwt-secret")
 			if tt.setup != nil {
 				tt.setup(t)
 			}
@@ -90,6 +91,7 @@ func TestRedisConfiguration(t *testing.T) {
 			for _, key := range []string{"DATABASE_URL", "DB_CHANNEL_BINDING", "JWT_SECRET", "REDIS_TLS", "REDIS_DB", "REDIS_USERNAME"} {
 				t.Setenv(key, "")
 			}
+			t.Setenv("JWT_SECRET", "test-jwt-secret")
 			if test.setup != nil {
 				test.setup(t)
 			}
@@ -113,6 +115,7 @@ func TestRedisConfiguration(t *testing.T) {
 func TestChannelBindingEnvironmentOverridesDatabaseURL(t *testing.T) {
 	viper.Reset()
 	t.Chdir(t.TempDir())
+	t.Setenv("JWT_SECRET", "test-jwt-secret")
 	t.Setenv("DATABASE_URL", "postgres://user:password@localhost/db?channel_binding=require")
 	t.Setenv("DB_CHANNEL_BINDING", "disable")
 	config, err := LoadConfig()
@@ -127,6 +130,7 @@ func TestChannelBindingEnvironmentOverridesDatabaseURL(t *testing.T) {
 func TestLoadConfigRejectsInvalidChannelBinding(t *testing.T) {
 	viper.Reset()
 	t.Chdir(t.TempDir())
+	t.Setenv("JWT_SECRET", "test-jwt-secret")
 	t.Setenv("DB_CHANNEL_BINDING", "invalid")
 	if _, err := LoadConfig(); err == nil {
 		t.Fatal("expected invalid channel binding configuration error")
@@ -136,6 +140,7 @@ func TestLoadConfigRejectsInvalidChannelBinding(t *testing.T) {
 func TestLoadConfigReadsDisabledChannelBindingFromDatabaseURL(t *testing.T) {
 	viper.Reset()
 	t.Chdir(t.TempDir())
+	t.Setenv("JWT_SECRET", "test-jwt-secret")
 	t.Setenv("DATABASE_URL", "postgres://user:password@localhost/db?sslmode=disable&channel_binding=disable")
 	config, err := LoadConfig()
 	if err != nil {
@@ -143,5 +148,39 @@ func TestLoadConfigReadsDisabledChannelBindingFromDatabaseURL(t *testing.T) {
 	}
 	if config.DBChannelBinding != "disable" {
 		t.Fatalf("channel binding=%q, want disable", config.DBChannelBinding)
+	}
+}
+
+func TestLoadConfigRequiresNonBlankJWTSecret(t *testing.T) {
+	tests := []struct {
+		name    string
+		secret  string
+		wantErr bool
+	}{
+		{name: "missing secret", wantErr: true},
+		{name: "blank secret", secret: " \t ", wantErr: true},
+		{name: "valid secret", secret: "test-jwt-secret"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			viper.Reset()
+			t.Chdir(t.TempDir())
+			t.Setenv("JWT_SECRET", test.secret)
+
+			config, err := LoadConfig()
+			if test.wantErr {
+				if err == nil {
+					t.Fatal("expected JWT_SECRET configuration error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if config.JWTSecret != test.secret {
+				t.Fatalf("JWTSecret=%q, want %q", config.JWTSecret, test.secret)
+			}
+		})
 	}
 }
