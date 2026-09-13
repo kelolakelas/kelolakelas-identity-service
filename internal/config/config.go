@@ -99,8 +99,8 @@ func LoadConfig() (Config, error) {
 	if config.DBPort == "" {
 		config.DBPort = "5432"
 	}
-	if config.JWTSecret == "" {
-		config.JWTSecret = "supersecretjwtkey123!"
+	if strings.TrimSpace(config.JWTSecret) == "" {
+		return Config{}, fmt.Errorf("JWT_SECRET is required")
 	}
 	if config.DBUser == "" {
 		config.DBUser = "postgres"
