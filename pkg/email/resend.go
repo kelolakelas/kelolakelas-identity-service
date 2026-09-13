@@ -2,9 +2,9 @@ package email
 
 import (
 	"fmt"
-    "net/url"
+	"net/url"
 	"os"
-    "strings"
+	"strings"
 
 	"github.com/resend/resend-go/v2"
 )
@@ -12,7 +12,7 @@ import (
 type ResendEmailService struct {
 	client    *resend.Client
 	fromEmail string
-    appURL    string
+	appURL    string
 }
 
 func NewResendEmailService(apiKey, fromEmail, appURL string) EmailService {
@@ -22,20 +22,20 @@ func NewResendEmailService(apiKey, fromEmail, appURL string) EmailService {
 	if fromEmail == "" {
 		fromEmail = os.Getenv("RESEND_FROM_EMAIL")
 	}
-    if appURL == "" {
-        appURL = os.Getenv("APP_URL")
-    }
+	if appURL == "" {
+		appURL = os.Getenv("APP_URL")
+	}
 
 	client := resend.NewClient(apiKey)
 	return &ResendEmailService{
 		client:    client,
 		fromEmail: fromEmail,
-        appURL:    strings.TrimRight(appURL, "/"),
+		appURL:    strings.TrimRight(appURL, "/"),
 	}
 }
 
 func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, tenantName string) error {
-    inviteURL := fmt.Sprintf("%s/invitations/verify?token=%s", s.appURL, url.QueryEscape(token))
+	inviteURL := fmt.Sprintf("%s/invitations/verify?token=%s", s.appURL, url.QueryEscape(token))
 
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
