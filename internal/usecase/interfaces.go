@@ -27,14 +27,18 @@ type TenantMemberUsecase interface {
 }
 
 type InvitationUsecase interface {
-	CreateInvitation(ctx context.Context, tenantID, roleID uuid.UUID, email string) (*domain.TenantInvitation, error)
+	CreateInvitation(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, email string) (*domain.TenantInvitation, error)
 	VerifyInvitation(ctx context.Context, token string) (*domain.TenantInvitation, error)
 }
 
 type RoleUsecase interface {
 	FetchAllPermissions(ctx context.Context) ([]domain.PermissionResponse, error)
 	FetchTenantRoles(ctx context.Context, tenantID uuid.UUID) ([]domain.RoleResponse, error)
-	CreateCustomRole(ctx context.Context, tenantID uuid.UUID, req *domain.CreateRoleRequest) (*domain.RoleResponse, error)
-	UpdateCustomRole(ctx context.Context, tenantID, roleID uuid.UUID, req *domain.UpdateRoleRequest) (*domain.RoleResponse, error)
-	DeleteCustomRole(ctx context.Context, tenantID, roleID uuid.UUID) error
+	CreateCustomRole(ctx context.Context, tenantID, callerRoleID uuid.UUID, req *domain.CreateRoleRequest) (*domain.RoleResponse, error)
+	UpdateCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, req *domain.UpdateRoleRequest) (*domain.RoleResponse, error)
+	DeleteCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID) error
+}
+
+type PermissionChecker interface {
+	HasPermission(ctx context.Context, roleID uuid.UUID, permission string) (bool, error)
 }

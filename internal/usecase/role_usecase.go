@@ -10,11 +10,12 @@ import (
 )
 
 type roleUsecase struct {
-	rbacRepo repository.RbacRepository
+	rbacRepo    repository.RbacRepository
+	permissions PermissionChecker
 }
 
-func NewRoleUsecase(rbacRepo repository.RbacRepository) RoleUsecase {
-	return &roleUsecase{rbacRepo: rbacRepo}
+func NewRoleUsecase(rbacRepo repository.RbacRepository, permissions PermissionChecker) RoleUsecase {
+	return &roleUsecase{rbacRepo: rbacRepo, permissions: permissions}
 }
 
 func (u *roleUsecase) FetchAllPermissions(ctx context.Context) ([]domain.PermissionResponse, error) {
@@ -47,7 +48,11 @@ func (u *roleUsecase) FetchTenantRoles(ctx context.Context, tenantID uuid.UUID) 
 	return res, nil
 }
 
-func (u *roleUsecase) CreateCustomRole(ctx context.Context, tenantID uuid.UUID, req *domain.CreateRoleRequest) (*domain.RoleResponse, error) {
+func (u *roleUsecase) CreateCustomRole(ctx context.Context, tenantID, callerRoleID uuid.UUID, req *domain.CreateRoleRequest) (*domain.RoleResponse, error) {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:create"); err != nil {
+		return nil, err
+	}
+
 	// Check if role name already exists in this tenant
 	existing, err := u.rbacRepo.GetRoleByNameAndTenantID(ctx, req.Name, tenantID)
 	if err != nil {
@@ -79,7 +84,11 @@ func (u *roleUsecase) CreateCustomRole(ctx context.Context, tenantID uuid.UUID, 
 	return &resp, nil
 }
 
-func (u *roleUsecase) UpdateCustomRole(ctx context.Context, tenantID, roleID uuid.UUID, req *domain.UpdateRoleRequest) (*domain.RoleResponse, error) {
+func (u *roleUsecase) UpdateCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, req *domain.UpdateRoleRequest) (*domain.RoleResponse, error) {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:update"); err != nil {
+		return nil, err
+	}
+
 	role, err := u.rbacRepo.GetRoleByID(ctx, roleID)
 	if err != nil {
 		return nil, err
@@ -119,7 +128,11 @@ func (u *roleUsecase) UpdateCustomRole(ctx context.Context, tenantID, roleID uui
 	return &resp, nil
 }
 
-func (u *roleUsecase) DeleteCustomRole(ctx context.Context, tenantID, roleID uuid.UUID) error {
+func (u *roleUsecase) DeleteCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID) error {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:delete"); err != nil {
+		return err
+	}
+
 	role, err := u.rbacRepo.GetRoleByID(ctx, roleID)
 	if err != nil {
 		return err

@@ -37,6 +37,18 @@ func extractTenantID(c *gin.Context) (uuid.UUID, error) {
 	return uuid.Nil, errors.New("tenant ID is required")
 }
 
+func extractCallerRoleID(c *gin.Context) uuid.UUID {
+	roleID, ok := c.Get("role_id")
+	if !ok {
+		return uuid.Nil
+	}
+	parsedRoleID, ok := roleID.(uuid.UUID)
+	if !ok {
+		return uuid.Nil
+	}
+	return parsedRoleID
+}
+
 // GetPermissions godoc
 // @Summary Get all system permissions
 // @Description Retrieve a list of all available permissions in the system
@@ -119,6 +131,7 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 // @Success 201 {object} domain.HTTPResponse{data=domain.RoleResponse}
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 409 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/roles [post]
@@ -143,8 +156,16 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 		return
 	}
 
-	role, err := h.roleUsecase.CreateCustomRole(c.Request.Context(), tenantID, &req)
+	role, err := h.roleUsecase.CreateCustomRole(c.Request.Context(), tenantID, extractCallerRoleID(c), &req)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": "Permission denied",
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrRoleNameExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"status":  "error",
@@ -218,8 +239,16 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 		return
 	}
 
-	role, err := h.roleUsecase.UpdateCustomRole(c.Request.Context(), tenantID, roleID, &req)
+	role, err := h.roleUsecase.UpdateCustomRole(c.Request.Context(), tenantID, extractCallerRoleID(c), roleID, &req)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": "Permission denied",
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
@@ -298,8 +327,16 @@ func (h *RoleHandler) DeleteRole(c *gin.Context) {
 		return
 	}
 
-	err = h.roleUsecase.DeleteCustomRole(c.Request.Context(), tenantID, roleID)
+	err = h.roleUsecase.DeleteCustomRole(c.Request.Context(), tenantID, extractCallerRoleID(c), roleID)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": "Permission denied",
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",

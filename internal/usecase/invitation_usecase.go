@@ -15,6 +15,7 @@ type invitationUsecase struct {
 	invitationRepo repository.InvitationRepository
 	tenantRepo     repository.TenantRepository
 	userRepo       domain.UserRepository
+	permissions    PermissionChecker
 	emailService   email.EmailService
 }
 
@@ -22,17 +23,23 @@ func NewInvitationUsecase(
 	invitationRepo repository.InvitationRepository,
 	tenantRepo repository.TenantRepository,
 	userRepo domain.UserRepository,
+	permissions PermissionChecker,
 	emailService email.EmailService,
 ) InvitationUsecase {
 	return &invitationUsecase{
 		invitationRepo: invitationRepo,
 		tenantRepo:     tenantRepo,
 		userRepo:       userRepo,
+		permissions:    permissions,
 		emailService:   emailService,
 	}
 }
 
-func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, roleID uuid.UUID, emailAddr string) (*domain.TenantInvitation, error) {
+func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, emailAddr string) (*domain.TenantInvitation, error) {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "member:invite"); err != nil {
+		return nil, err
+	}
+
 	// 1. Check if user already exists and is a member of this tenant
 	user, err := u.userRepo.GetByEmail(ctx, emailAddr)
 	if err == nil && user != nil {

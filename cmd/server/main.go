@@ -75,9 +75,9 @@ func main() {
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
-	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, jwtService, redisService, mapsClient)
-	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, emailService)
-	roleUsecase := usecase.NewRoleUsecase(rbacRepo)
+	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient)
+	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, memberRepo, emailService)
+	roleUsecase := usecase.NewRoleUsecase(rbacRepo, memberRepo)
 	memberUsecase := usecase.NewMemberUsecase(memberRepo)
 
 	authHandler := handler.NewAuthHandler(authUsecase, tenantUsecase)

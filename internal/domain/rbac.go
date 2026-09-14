@@ -13,6 +13,7 @@ var (
 	ErrSystemRoleCannotBeModified  = errors.New("system roles cannot be modified")
 	ErrForbiddenRoleAccess         = errors.New("forbidden: role belongs to another tenant")
 	ErrRoleAssignedToActiveMembers = errors.New("cannot delete role because it is currently assigned to active members")
+	ErrPermissionDenied            = errors.New("permission denied")
 )
 
 type Permission struct {

@@ -17,15 +17,17 @@ import (
 type tenantUsecase struct {
 	userRepo     domain.UserRepository
 	tenantRepo   repository.TenantRepository
+	permissions  PermissionChecker
 	jwtService   *jwt.JWTService
 	redisService *database.RedisService
 	mapsClient   maps.MapsClient
 }
 
-func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, jwtService *jwt.JWTService, redisService *database.RedisService, mapsClient maps.MapsClient) domain.TenantUsecase {
+func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, permissions PermissionChecker, jwtService *jwt.JWTService, redisService *database.RedisService, mapsClient maps.MapsClient) domain.TenantUsecase {
 	return &tenantUsecase{
 		userRepo:     userRepo,
 		tenantRepo:   tenantRepo,
+		permissions:  permissions,
 		jwtService:   jwtService,
 		redisService: redisService,
 		mapsClient:   mapsClient,
@@ -40,7 +42,11 @@ func (u *tenantUsecase) GetTenantLocation(ctx context.Context, id uuid.UUID) (*d
 	return &domain.TenantLocation{Address: valueOrEmpty(tenant.Address), AddressFormatted: tenant.AddressFormatted, Latitude: tenant.Latitude, Longitude: tenant.Longitude, GooglePlaceID: tenant.GooglePlaceID, LocationAccuracyMeters: tenant.LocationAccuracyMeters, LocationUpdatedAt: tenant.LocationUpdatedAt}, nil
 }
 
-func (u *tenantUsecase) UpdateTenantLocation(ctx context.Context, id uuid.UUID, req *domain.UpdateTenantLocationRequest) (*domain.TenantLocation, error) {
+func (u *tenantUsecase) UpdateTenantLocation(ctx context.Context, id, callerRoleID uuid.UUID, req *domain.UpdateTenantLocationRequest) (*domain.TenantLocation, error) {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "tenant:update"); err != nil {
+		return nil, err
+	}
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -153,7 +159,11 @@ func (u *tenantUsecase) GetTenantByID(ctx context.Context, id uuid.UUID) (*domai
 	return u.tenantRepo.GetByID(ctx, id)
 }
 
-func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id uuid.UUID, req *domain.UpdateTenantSettingsRequest) (*domain.Tenant, error) {
+func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id, callerRoleID uuid.UUID, req *domain.UpdateTenantSettingsRequest) (*domain.Tenant, error) {
+	if err := requirePermission(ctx, u.permissions, callerRoleID, "tenant:update"); err != nil {
+		return nil, err
+	}
+
 	tenant, err := u.tenantRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
