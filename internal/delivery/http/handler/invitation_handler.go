@@ -47,6 +47,7 @@ type RegisterInvitedUserPayload struct {
 // @Success 201 {object} domain.HTTPResponse{data=domain.TenantInvitation}
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 409 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/invitations [post]
@@ -81,8 +82,16 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		return
 	}
 
-	invitation, err := h.invitationUsecase.CreateInvitation(c.Request.Context(), tenantID, payload.RoleID, payload.Email)
+	invitation, err := h.invitationUsecase.CreateInvitation(c.Request.Context(), tenantID, extractCallerRoleID(c), payload.RoleID, payload.Email)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": "Permission denied",
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrAlreadyTenantMember) {
 			c.JSON(http.StatusConflict, gin.H{
 				"status":  "error",

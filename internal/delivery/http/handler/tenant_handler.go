@@ -65,6 +65,7 @@ func (h *TenantHandler) GetSettings(c *gin.Context) {
 // @Param request body domain.UpdateTenantSettingsRequest true "Tenant settings payload"
 // @Success 200 {object} domain.HTTPResponse{data=domain.Tenant}
 // @Failure 400 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 404 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/tenant/settings [patch]
@@ -79,8 +80,12 @@ func (h *TenantHandler) UpdateSettings(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid tenant settings", "data": nil})
 		return
 	}
-	tenant, err := h.usecase.UpdateTenantSettings(c.Request.Context(), tenantID, &req)
+	tenant, err := h.usecase.UpdateTenantSettings(c.Request.Context(), tenantID, extractCallerRoleID(c), &req)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to update tenant settings", "data": nil})
 		return
 	}
@@ -123,6 +128,7 @@ func (h *TenantHandler) GetLocation(c *gin.Context) {
 // @Success 200 {object} domain.HTTPResponse{data=domain.TenantLocation}
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 404 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/tenant/settings/location [put]
@@ -136,9 +142,12 @@ func (h *TenantHandler) UpdateLocation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid tenant location", "data": nil})
 		return
 	}
-	location, err := h.usecase.UpdateTenantLocation(c.Request.Context(), tenantID, &req)
+	location, err := h.usecase.UpdateTenantLocation(c.Request.Context(), tenantID, extractCallerRoleID(c), &req)
 	if err != nil {
 		status := http.StatusInternalServerError
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			status = http.StatusForbidden
+		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			status = http.StatusNotFound
 		}

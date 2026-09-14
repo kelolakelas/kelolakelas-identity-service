@@ -92,7 +92,7 @@ type UpdateTenantSettingsRequest struct {
 type TenantUsecase interface {
 	RegisterTenant(ctx context.Context, req *RegisterTenantRequest) (*RegisterTenantResponse, error)
 	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
-	UpdateTenantSettings(ctx context.Context, id uuid.UUID, req *UpdateTenantSettingsRequest) (*Tenant, error)
+	UpdateTenantSettings(ctx context.Context, id, callerRoleID uuid.UUID, req *UpdateTenantSettingsRequest) (*Tenant, error)
 	GetTenantLocation(ctx context.Context, id uuid.UUID) (*TenantLocation, error)
-	UpdateTenantLocation(ctx context.Context, id uuid.UUID, req *UpdateTenantLocationRequest) (*TenantLocation, error)
+	UpdateTenantLocation(ctx context.Context, id, callerRoleID uuid.UUID, req *UpdateTenantLocationRequest) (*TenantLocation, error)
 }
