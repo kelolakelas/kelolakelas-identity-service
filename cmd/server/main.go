@@ -143,6 +143,7 @@ func main() {
 		grpcServer := grpc.NewServer()
 		tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
 		pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
+		idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
 
 		slog.Info("Starting gRPC server on port :50051")
 		if err := grpcServer.Serve(lis); err != nil {
