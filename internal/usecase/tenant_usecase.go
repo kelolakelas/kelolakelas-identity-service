@@ -43,7 +43,7 @@ func (u *tenantUsecase) GetTenantLocation(ctx context.Context, id uuid.UUID) (*d
 }
 
 func (u *tenantUsecase) UpdateTenantLocation(ctx context.Context, id, callerRoleID uuid.UUID, req *domain.UpdateTenantLocationRequest) (*domain.TenantLocation, error) {
-	if err := requirePermission(ctx, u.permissions, callerRoleID, "tenant:update"); err != nil {
+	if err := requirePermission(ctx, u.permissions, id, callerRoleID, "tenant:update"); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +160,7 @@ func (u *tenantUsecase) GetTenantByID(ctx context.Context, id uuid.UUID) (*domai
 }
 
 func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id, callerRoleID uuid.UUID, req *domain.UpdateTenantSettingsRequest) (*domain.Tenant, error) {
-	if err := requirePermission(ctx, u.permissions, callerRoleID, "tenant:update"); err != nil {
+	if err := requirePermission(ctx, u.permissions, id, callerRoleID, "tenant:update"); err != nil {
 		return nil, err
 	}
 

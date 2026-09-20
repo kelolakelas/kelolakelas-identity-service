@@ -11,12 +11,13 @@ import (
 )
 
 type memberRepositoryStub struct {
-	items   []domain.MemberResponse
-	total   int64
-	err     error
-	query   domain.MemberQuery
-	allowed bool
-	deleted bool
+	items            []domain.MemberResponse
+	total            int64
+	err              error
+	query            domain.MemberQuery
+	allowed          bool
+	deleted          bool
+	permissionTenant uuid.UUID
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -37,7 +38,8 @@ func (s *memberRepositoryStub) Delete(context.Context, uuid.UUID, uuid.UUID) err
 	return s.err
 }
 
-func (s *memberRepositoryStub) HasPermission(context.Context, uuid.UUID, string) (bool, error) {
+func (s *memberRepositoryStub) HasPermission(_ context.Context, tenantID, _ uuid.UUID, _ string) (bool, error) {
+	s.permissionTenant = tenantID
 	return s.allowed, s.err
 }
 
@@ -60,7 +62,8 @@ func TestMemberUsecaseDelete(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			stub := &memberRepositoryStub{allowed: test.allowed, err: test.err}
-			err := NewMemberUsecase(stub).Delete(context.Background(), uuid.New(), uuid.New(), uuid.New())
+			tenantID := uuid.New()
+			err := NewMemberUsecase(stub).Delete(context.Background(), tenantID, uuid.New(), uuid.New())
 			if test.expectErr != nil {
 				if err == nil || err.Error() != test.expectErr.Error() {
 					t.Fatalf("error = %v, want %v", err, test.expectErr)
@@ -70,6 +73,9 @@ func TestMemberUsecaseDelete(t *testing.T) {
 			}
 			if stub.deleted != test.expectDeleted {
 				t.Fatalf("deleted = %v, want %v", stub.deleted, test.expectDeleted)
+			}
+			if stub.permissionTenant != tenantID {
+				t.Fatalf("permission tenant = %s, want %s", stub.permissionTenant, tenantID)
 			}
 		})
 	}

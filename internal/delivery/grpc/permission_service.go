@@ -16,6 +16,13 @@ const (
 	PermissionServiceCheckPermissionPath = "/tenant.PermissionService/CheckPermission"
 )
 
+// RequirePermissionTenantID controls whether CheckPermission rejects requests that omit
+// tenant_id. ADR 0002 requires identity to accept tenant_id as optional first, so that an
+// academic deployment still sending only role_id and permission keeps working, and only
+// then to make it mandatory. Set it to false during the transition window (deploy identity,
+// then academic) and to true once every caller sends tenant_id.
+var RequirePermissionTenantID = false
+
 // PermissionServiceServer is the internal identity-to-domain authorization contract.
 // structpb is used because the repository carries generated protobuf files without
 // their source .proto; the fields are documented and validated at this seam.
@@ -60,6 +67,16 @@ func permissionServiceCheckPermissionHandler(
 
 // CheckPermission answers from persisted role_permissions so role changes take
 // effect immediately even when the caller presents an older JWT.
+//
+// The decision is scoped to the tenant supplied in "tenant_id": the role must belong to
+// that tenant or be a system role (tenant_id IS NULL), so a role lifted from another
+// tenant never satisfies the check. A role that no longer exists yields no rows and is
+// therefore denied.
+//
+// During the ADR 0002 transition window requests without "tenant_id" are still answered
+// with the legacy global lookup so an academic deployment that has not been upgraded yet
+// keeps working. Once every caller sends "tenant_id", set RequirePermissionTenantID to
+// true to reject those requests instead.
 func (s *TenantServiceServer) CheckPermission(ctx context.Context, req *structpb.Struct) (*structpb.Struct, error) {
 	roleID, err := structString(req, "role_id")
 	if err != nil {
@@ -74,17 +91,51 @@ func (s *TenantServiceServer) CheckPermission(ctx context.Context, req *structpb
 		return nil, status.Error(codes.InvalidArgument, "role_id must be a UUID")
 	}
 
-	var count int64
-	err = s.db.WithContext(ctx).
-		Table("role_permissions rp").
-		Joins("JOIN permissions p ON p.id = rp.permission_id").
-		Joins("JOIN roles r ON r.id = rp.role_id").
-		Where("r.id = ? AND p.name = ?", parsedRoleID, permission).
-		Count(&count).Error
+	tenantValue, tenantErr := structString(req, "tenant_id")
+	if tenantErr != nil {
+		if RequirePermissionTenantID {
+			return nil, status.Error(codes.InvalidArgument, "tenant_id is required")
+		}
+		// Transition window: an academic deployment that has not been upgraded yet still
+		// sends only role_id and permission, so fall back to the legacy global lookup.
+		allowed, err := s.checkPermission(ctx, nil, parsedRoleID, permission)
+		if err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("check permission: %v", err))
+		}
+		return structpb.NewStruct(map[string]interface{}{"allowed": allowed})
+	}
+
+	parsedTenantID, err := uuid.Parse(tenantValue)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "tenant_id must be a UUID")
+	}
+
+	allowed, err := s.checkPermission(ctx, &parsedTenantID, parsedRoleID, permission)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("check permission: %v", err))
 	}
-	return structpb.NewStruct(map[string]interface{}{"allowed": count > 0})
+	return structpb.NewStruct(map[string]interface{}{"allowed": allowed})
+}
+
+// checkPermission counts the role_permissions rows backing a decision. When tenantID is
+// non-nil the role must belong to that tenant or be a system role (tenant_id IS NULL), so a
+// role lifted from another tenant never satisfies the check. A role that no longer exists
+// yields no rows and is therefore denied.
+func (s *TenantServiceServer) checkPermission(ctx context.Context, tenantID *uuid.UUID, roleID uuid.UUID, permission string) (bool, error) {
+	query := s.db.WithContext(ctx).
+		Table("role_permissions rp").
+		Joins("JOIN permissions p ON p.id = rp.permission_id").
+		Joins("JOIN roles r ON r.id = rp.role_id").
+		Where("r.id = ? AND p.name = ?", roleID, permission)
+	if tenantID != nil {
+		query = query.Where("r.tenant_id = ? OR r.tenant_id IS NULL", *tenantID)
+	}
+
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func structString(req *structpb.Struct, key string) (string, error) {

@@ -14,10 +14,12 @@ type permissionCheckerStub struct {
 	allowed     bool
 	err         error
 	permissions []string
+	tenants     []uuid.UUID
 }
 
-func (s *permissionCheckerStub) HasPermission(_ context.Context, _ uuid.UUID, permission string) (bool, error) {
+func (s *permissionCheckerStub) HasPermission(_ context.Context, tenantID, _ uuid.UUID, permission string) (bool, error) {
 	s.permissions = append(s.permissions, permission)
+	s.tenants = append(s.tenants, tenantID)
 	return s.allowed, s.err
 }
 
@@ -35,7 +37,7 @@ func TestAdministrativeMutationsRequirePermissionBeforeAccessingRepositories(t *
 			name:       "invitation creation",
 			permission: "member:invite",
 			execute: func(checker PermissionChecker) error {
-				_, err := NewInvitationUsecase(nil, nil, nil, checker, nil).CreateInvitation(context.Background(), tenantID, roleID, targetRoleID, "member@example.com")
+				_, err := NewInvitationUsecase(nil, nil, nil, nil, checker, nil).CreateInvitation(context.Background(), tenantID, roleID, targetRoleID, "member@example.com")
 				return err
 			},
 		},
@@ -90,13 +92,27 @@ func TestAdministrativeMutationsRequirePermissionBeforeAccessingRepositories(t *
 			if len(checker.permissions) != 1 || checker.permissions[0] != test.permission {
 				t.Fatalf("permissions = %v, want [%s]", checker.permissions, test.permission)
 			}
+			if len(checker.tenants) != 1 || checker.tenants[0] != tenantID {
+				t.Fatalf("tenants = %v, want [%s]", checker.tenants, tenantID)
+			}
 		})
 	}
 }
 
 func TestRequirePermissionRejectsMissingRoleWithoutLookup(t *testing.T) {
 	checker := &permissionCheckerStub{allowed: true}
-	err := requirePermission(context.Background(), checker, uuid.Nil, "tenant:update")
+	err := requirePermission(context.Background(), checker, uuid.New(), uuid.Nil, "tenant:update")
+	if !errors.Is(err, domain.ErrPermissionDenied) {
+		t.Fatalf("error = %v, want permission denied", err)
+	}
+	if len(checker.permissions) != 0 {
+		t.Fatalf("permission lookups = %v, want none", checker.permissions)
+	}
+}
+
+func TestRequirePermissionRejectsMissingTenantWithoutLookup(t *testing.T) {
+	checker := &permissionCheckerStub{allowed: true}
+	err := requirePermission(context.Background(), checker, uuid.Nil, uuid.New(), "tenant:update")
 	if !errors.Is(err, domain.ErrPermissionDenied) {
 		t.Fatalf("error = %v, want permission denied", err)
 	}
@@ -106,8 +122,12 @@ func TestRequirePermissionRejectsMissingRoleWithoutLookup(t *testing.T) {
 }
 
 func TestRequirePermissionAllowsAssignedPermission(t *testing.T) {
+	tenantID := uuid.New()
 	checker := &permissionCheckerStub{allowed: true}
-	if err := requirePermission(context.Background(), checker, uuid.New(), "tenant:update"); err != nil {
+	if err := requirePermission(context.Background(), checker, tenantID, uuid.New(), "tenant:update"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(checker.tenants) != 1 || checker.tenants[0] != tenantID {
+		t.Fatalf("tenants = %v, want [%s]", checker.tenants, tenantID)
 	}
 }

@@ -49,7 +49,7 @@ func (u *roleUsecase) FetchTenantRoles(ctx context.Context, tenantID uuid.UUID) 
 }
 
 func (u *roleUsecase) CreateCustomRole(ctx context.Context, tenantID, callerRoleID uuid.UUID, req *domain.CreateRoleRequest) (*domain.RoleResponse, error) {
-	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:create"); err != nil {
+	if err := requirePermission(ctx, u.permissions, tenantID, callerRoleID, "role:create"); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (u *roleUsecase) CreateCustomRole(ctx context.Context, tenantID, callerRole
 }
 
 func (u *roleUsecase) UpdateCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, req *domain.UpdateRoleRequest) (*domain.RoleResponse, error) {
-	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:update"); err != nil {
+	if err := requirePermission(ctx, u.permissions, tenantID, callerRoleID, "role:update"); err != nil {
 		return nil, err
 	}
 
@@ -129,7 +129,7 @@ func (u *roleUsecase) UpdateCustomRole(ctx context.Context, tenantID, callerRole
 }
 
 func (u *roleUsecase) DeleteCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID) error {
-	if err := requirePermission(ctx, u.permissions, callerRoleID, "role:delete"); err != nil {
+	if err := requirePermission(ctx, u.permissions, tenantID, callerRoleID, "role:delete"); err != nil {
 		return err
 	}
 

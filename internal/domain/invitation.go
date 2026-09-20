@@ -12,6 +12,9 @@ var (
 	ErrInvitationExpired   = errors.New("invitation token has expired")
 	ErrInvitationUsed      = errors.New("invitation token has already been used")
 	ErrAlreadyTenantMember = errors.New("user is already a member of this tenant")
+	// ErrInvitationRoleInvalid rejects invitations that would hand out a role owned by
+	// another tenant. The invited role must belong to the target tenant or be a system role.
+	ErrInvitationRoleInvalid = errors.New("role does not belong to tenant or is not a system role")
 )
 
 type TenantInvitation struct {
