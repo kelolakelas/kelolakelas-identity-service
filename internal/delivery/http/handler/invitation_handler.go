@@ -37,12 +37,12 @@ type RegisterInvitedUserPayload struct {
 
 // CreateInvitation godoc
 // @Summary Create tenant invitation
-// @Description Invite a new member to join the tenant with a specific role
+// @Description Invite a new member to join the tenant carried by the caller's access token
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
 // @Tags Invitations
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
 // @Param request body CreateInvitationPayload true "Create invitation payload"
 // @Success 201 {object} domain.HTTPResponse{data=domain.TenantInvitation}
 // @Failure 400 {object} domain.ErrorResponse
