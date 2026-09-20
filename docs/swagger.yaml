@@ -489,13 +489,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Invite a new member to join the tenant with a specific role
+      description: |-
+        Invite a new member to join the tenant carried by the caller's access token
+        The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
       parameters:
-      - description: Tenant ID dalam format UUID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
       - description: Create invitation payload
         in: body
         name: request
@@ -664,8 +661,12 @@ paths:
                 data:
                   $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberListResponse'
               type: object
-        "400":
-          description: Bad Request
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
@@ -737,6 +738,26 @@ paths:
                 data:
                   $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MemberResponse'
               type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get tenant member
@@ -831,13 +852,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetch all custom and system roles for a specific tenant
-      parameters:
-      - description: Tenant ID dalam format UUID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
+      description: |-
+        Fetch all custom and system roles for the tenant carried by the caller's access token
+        The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
       produces:
       - application/json
       responses:
@@ -852,12 +869,12 @@ paths:
                     $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse'
                   type: array
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
@@ -872,13 +889,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new custom role with assigned permissions for a tenant
+      description: |-
+        Create a new custom role with assigned permissions for the tenant carried by the caller's access token
+        The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
       parameters:
-      - description: Tenant ID dalam format UUID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
       - description: Create role payload
         in: body
         name: request
@@ -926,13 +940,10 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete an existing custom role from a tenant
+      description: |-
+        Delete an existing custom role from a tenant
+        The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
       parameters:
-      - description: Tenant ID dalam format UUID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
       - description: Role ID (UUID)
         in: path
         name: id
@@ -977,14 +988,10 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update name, description, or permissions of an existing custom
-        role
+      description: |-
+        Update name, description, or permissions of an existing custom role
+        The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
       parameters:
-      - description: Tenant ID dalam format UUID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
       - description: Role ID (UUID)
         in: path
         name: id
@@ -1051,8 +1058,12 @@ paths:
                 data:
                   $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
               type: object
-        "400":
-          description: Bad Request
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
@@ -1127,6 +1138,10 @@ paths:
               type: object
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
@@ -1239,8 +1254,12 @@ paths:
                 data:
                   $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.Tenant'
               type: object
-        "400":
-          description: Bad Request
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
@@ -1331,12 +1350,12 @@ paths:
                 data:
                   $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TutorListResponse'
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":

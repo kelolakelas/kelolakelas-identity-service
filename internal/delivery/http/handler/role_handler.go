@@ -19,24 +19,6 @@ func NewRoleHandler(roleUsecase usecase.RoleUsecase) *RoleHandler {
 	return &RoleHandler{roleUsecase: roleUsecase}
 }
 
-func extractTenantID(c *gin.Context) (uuid.UUID, error) {
-	if val, exists := c.Get("tenant_id"); exists {
-		if id, ok := val.(uuid.UUID); ok && id != uuid.Nil {
-			return id, nil
-		}
-		if idStr, ok := val.(string); ok && idStr != "" {
-			return uuid.Parse(idStr)
-		}
-	}
-
-	headerTenant := c.GetHeader("X-Tenant-ID")
-	if headerTenant != "" {
-		return uuid.Parse(headerTenant)
-	}
-
-	return uuid.Nil, errors.New("tenant ID is required")
-}
-
 func extractCallerRoleID(c *gin.Context) uuid.UUID {
 	roleID, ok := c.Get("role_id")
 	if !ok {
@@ -80,25 +62,21 @@ func (h *RoleHandler) GetPermissions(c *gin.Context) {
 
 // GetRoles godoc
 // @Summary Get tenant roles
-// @Description Fetch all custom and system roles for a specific tenant
+// @Description Fetch all custom and system roles for the tenant carried by the caller's access token
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
 // @Tags Roles & Permissions
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
 // @Success 200 {object} domain.HTTPResponse{data=[]domain.RoleResponse}
-// @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/roles [get]
 func (h *RoleHandler) GetRoles(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		writeTenantError(c, err)
 		return
 	}
 
@@ -121,12 +99,12 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 
 // CreateRole godoc
 // @Summary Create a custom role
-// @Description Create a new custom role with assigned permissions for a tenant
+// @Description Create a new custom role with assigned permissions for the tenant carried by the caller's access token
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
 // @Tags Roles & Permissions
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
 // @Param request body domain.CreateRoleRequest true "Create role payload"
 // @Success 201 {object} domain.HTTPResponse{data=domain.RoleResponse}
 // @Failure 400 {object} domain.ErrorResponse
@@ -136,13 +114,9 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/roles [post]
 func (h *RoleHandler) CreateRole(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		writeTenantError(c, err)
 		return
 	}
 
@@ -192,11 +166,11 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 // UpdateRole godoc
 // @Summary Update a custom role
 // @Description Update name, description, or permissions of an existing custom role
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
 // @Tags Roles & Permissions
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
 // @Param id path string true "Role ID (UUID)"
 // @Param request body domain.UpdateRoleRequest true "Update role payload"
 // @Success 200 {object} domain.HTTPResponse{data=domain.RoleResponse}
@@ -208,13 +182,9 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/roles/{id} [put]
 func (h *RoleHandler) UpdateRole(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		writeTenantError(c, err)
 		return
 	}
 
@@ -291,11 +261,11 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 // DeleteRole godoc
 // @Summary Delete a custom role
 // @Description Delete an existing custom role from a tenant
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
 // @Tags Roles & Permissions
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID dalam format UUID"
 // @Param id path string true "Role ID (UUID)"
 // @Success 200 {object} domain.HTTPResponse
 // @Failure 400 {object} domain.ErrorResponse
@@ -306,13 +276,9 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/roles/{id} [delete]
 func (h *RoleHandler) DeleteRole(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		writeTenantError(c, err)
 		return
 	}
 

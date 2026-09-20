@@ -20,9 +20,9 @@ func NewTenantHandler(usecase domain.TenantUsecase) *TenantHandler {
 }
 
 func (h *TenantHandler) currentTenant(c *gin.Context) (uuid.UUID, bool) {
-	id, err := extractTenantID(c)
-	if err != nil || id == uuid.Nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+	id, err := tenantIDFromContext(c)
+	if err != nil {
+		writeTenantError(c, err)
 		return uuid.Nil, false
 	}
 	return id, true
@@ -34,7 +34,8 @@ func (h *TenantHandler) currentTenant(c *gin.Context) (uuid.UUID, bool) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} domain.HTTPResponse{data=domain.Tenant}
-// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 404 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/tenant/settings [get]
@@ -99,6 +100,7 @@ func (h *TenantHandler) UpdateSettings(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} domain.HTTPResponse{data=domain.TenantLocation}
 // @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 404 {object} domain.ErrorResponse
 // @Router /api/v1/tenant/settings/location [get]
 func (h *TenantHandler) GetLocation(c *gin.Context) {

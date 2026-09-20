@@ -22,12 +22,12 @@ import (
 // @Param search query string false "Search tutor"
 // @Param status query string false "active or inactive"
 // @Success 200 {object} domain.HTTPResponse{data=domain.TutorListResponse}
-// @Failure 400,401,500 {object} domain.ErrorResponse
+// @Failure 401,403,500 {object} domain.ErrorResponse
 // @Router /api/v1/tutors [get]
 func (h *MemberHandler) ListTutors(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		writeTenantError(c, err)
 		return
 	}
 	query := domain.TutorQuery{Page: 1, PageSize: 20, Search: c.Query("search"), Status: c.Query("status")}
@@ -73,13 +73,14 @@ func NewMemberHandler(usecase domain.MemberUsecase) *MemberHandler {
 // @Param sort query string false "joined_at, updated_at, email, or name"
 // @Param order query string false "asc or desc"
 // @Success 200 {object} domain.HTTPResponse{data=domain.MemberListResponse}
-// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/members [get]
 func (h *MemberHandler) ListMembers(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		writeTenantError(c, err)
 		return
 	}
 
@@ -126,11 +127,16 @@ func (h *MemberHandler) ListMembers(c *gin.Context) {
 // @Security BearerAuth
 // @Param id path string true "Member UUID"
 // @Success 200 {object} domain.HTTPResponse{data=domain.MemberResponse}
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/members/{id} [get]
 func (h *MemberHandler) GetMember(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		writeTenantError(c, err)
 		return
 	}
 	memberID, err := uuid.Parse(c.Param("id"))
@@ -162,9 +168,9 @@ func (h *MemberHandler) GetMember(c *gin.Context) {
 // @Failure 400,401,403,404,409 {object} domain.ErrorResponse
 // @Router /api/v1/members/{id}/role [put]
 func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		writeTenantError(c, err)
 		return
 	}
 	memberID, err := uuid.Parse(c.Param("id"))
@@ -219,9 +225,9 @@ func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
 // @Failure 400,401,403,404,500 {object} domain.ErrorResponse
 // @Router /api/v1/members/{id} [delete]
 func (h *MemberHandler) DeleteMember(c *gin.Context) {
-	tenantID, err := extractTenantID(c)
+	tenantID, err := tenantIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Tenant ID is required", "data": nil})
+		writeTenantError(c, err)
 		return
 	}
 	memberID, err := uuid.Parse(c.Param("id"))

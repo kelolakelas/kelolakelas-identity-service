@@ -138,7 +138,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Invite a new member to join the tenant with a specific role",
+                "description": "Invite a new member to join the tenant carried by the caller's access token\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored",
                 "consumes": [
                     "application/json"
                 ],
@@ -150,13 +150,6 @@ const docTemplate = `{
                 ],
                 "summary": "Create tenant invitation",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant ID dalam format UUID",
-                        "name": "X-Tenant-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "description": "Create invitation payload",
                         "name": "request",
@@ -429,8 +422,14 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -484,6 +483,36 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     }
                 }
@@ -700,7 +729,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetch all custom and system roles for a specific tenant",
+                "description": "Fetch all custom and system roles for the tenant carried by the caller's access token\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored",
                 "consumes": [
                     "application/json"
                 ],
@@ -711,15 +740,6 @@ const docTemplate = `{
                     "Roles \u0026 Permissions"
                 ],
                 "summary": "Get tenant roles",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant ID dalam format UUID",
-                        "name": "X-Tenant-ID",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -742,14 +762,14 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -768,7 +788,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new custom role with assigned permissions for a tenant",
+                "description": "Create a new custom role with assigned permissions for the tenant carried by the caller's access token\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored",
                 "consumes": [
                     "application/json"
                 ],
@@ -780,13 +800,6 @@ const docTemplate = `{
                 ],
                 "summary": "Create a custom role",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant ID dalam format UUID",
-                        "name": "X-Tenant-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "description": "Create role payload",
                         "name": "request",
@@ -856,7 +869,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update name, description, or permissions of an existing custom role",
+                "description": "Update name, description, or permissions of an existing custom role\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored",
                 "consumes": [
                     "application/json"
                 ],
@@ -868,13 +881,6 @@ const docTemplate = `{
                 ],
                 "summary": "Update a custom role",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant ID dalam format UUID",
-                        "name": "X-Tenant-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Role ID (UUID)",
@@ -955,7 +961,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an existing custom role from a tenant",
+                "description": "Delete an existing custom role from a tenant\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored",
                 "consumes": [
                     "application/json"
                 ],
@@ -967,13 +973,6 @@ const docTemplate = `{
                 ],
                 "summary": "Delete a custom role",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant ID dalam format UUID",
-                        "name": "X-Tenant-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Role ID (UUID)",
@@ -1061,8 +1060,14 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -1189,6 +1194,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -1377,8 +1388,14 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -1530,14 +1547,14 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
