@@ -151,3 +151,28 @@ func TestAdministrativeMutationsWithoutRoleReturnForbidden(t *testing.T) {
 		}
 	})
 }
+
+// invalidInvitableRoleInvitationUsecase reports the role-scope validation error so the handler
+// mapping can be asserted without a database.
+type invalidInvitableRoleInvitationUsecase struct{}
+
+func (*invalidInvitableRoleInvitationUsecase) CreateInvitation(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (*domain.TenantInvitation, error) {
+	return nil, domain.ErrInvitationRoleInvalid
+}
+
+func (*invalidInvitableRoleInvitationUsecase) VerifyInvitation(context.Context, string) (*domain.TenantInvitation, error) {
+	return nil, nil
+}
+
+// TestCreateInvitationWithForeignRoleReturnsBadRequest covers the delivery-level part of
+// KEL-20: inviting someone with a role owned by another tenant is a client error, not a 500.
+func TestCreateInvitationWithForeignRoleReturnsBadRequest(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	context, recorder := permissionTestContext(http.MethodPost, `{"role_id":"`+uuid.New().String()+`","email":"member@example.com"}`)
+	NewInvitationHandler(&invalidInvitableRoleInvitationUsecase{}, nil).CreateInvitation(context)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d, want 400", recorder.Code)
+	}
+}

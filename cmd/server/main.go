@@ -76,7 +76,7 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
 	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient)
-	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, memberRepo, emailService)
+	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, rbacRepo, memberRepo, emailService)
 	roleUsecase := usecase.NewRoleUsecase(rbacRepo, memberRepo)
 	memberUsecase := usecase.NewMemberUsecase(memberRepo)
 
@@ -141,6 +141,15 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
+		// ADR 0002 transition window: while PERMISSION_REQUIRE_TENANT_ID is unset,
+		// CheckPermission still answers academic deployments that have not been upgraded
+		// yet and do not send tenant_id.
+		idgrpc.RequirePermissionTenantID = cfg.PermissionRequireTenantID
+		if idgrpc.RequirePermissionTenantID {
+			slog.Info("CheckPermission requires tenant_id on every request")
+		} else {
+			slog.Warn("CheckPermission accepts requests without tenant_id (ADR 0002 transition window)")
+		}
 		tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
 		pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
 		idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)

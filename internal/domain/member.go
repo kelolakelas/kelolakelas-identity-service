@@ -88,7 +88,7 @@ type MemberRepository interface {
 	GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*MemberResponse, error)
 	UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID) (*MemberResponse, error)
 	Delete(ctx context.Context, tenantID, memberID uuid.UUID) error
-	HasPermission(ctx context.Context, roleID uuid.UUID, permission string) (bool, error)
+	HasPermission(ctx context.Context, tenantID, roleID uuid.UUID, permission string) (bool, error)
 	ListTutors(ctx context.Context, tenantID uuid.UUID, query TutorQuery) ([]TutorResponse, int64, error)
 }
 

@@ -40,5 +40,5 @@ type RoleUsecase interface {
 }
 
 type PermissionChecker interface {
-	HasPermission(ctx context.Context, roleID uuid.UUID, permission string) (bool, error)
+	HasPermission(ctx context.Context, tenantID, roleID uuid.UUID, permission string) (bool, error)
 }

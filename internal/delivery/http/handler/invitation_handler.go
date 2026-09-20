@@ -100,6 +100,14 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 			})
 			return
 		}
+		if errors.Is(err, domain.ErrInvitationRoleInvalid) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Role does not belong to this tenant or is not a system role",
+				"data":    nil,
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to create invitation: " + err.Error(),

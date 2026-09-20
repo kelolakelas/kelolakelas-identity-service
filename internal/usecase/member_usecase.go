@@ -40,7 +40,7 @@ func (u *memberUsecase) GetByID(ctx context.Context, tenantID, memberID uuid.UUI
 }
 
 func (u *memberUsecase) UpdateRole(ctx context.Context, tenantID, callerRoleID, memberID, roleID uuid.UUID) (*domain.MemberResponse, error) {
-	allowed, err := u.repo.HasPermission(ctx, callerRoleID, "member:update")
+	allowed, err := u.repo.HasPermission(ctx, tenantID, callerRoleID, "member:update")
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (u *memberUsecase) UpdateRole(ctx context.Context, tenantID, callerRoleID, 
 }
 
 func (u *memberUsecase) Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error {
-	allowed, err := u.repo.HasPermission(ctx, callerRoleID, "member:delete")
+	allowed, err := u.repo.HasPermission(ctx, tenantID, callerRoleID, "member:delete")
 	if err != nil {
 		return err
 	}

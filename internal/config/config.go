@@ -35,6 +35,12 @@ type Config struct {
 	GoogleMapsAPIKey           string `mapstructure:"GOOGLE_MAPS_API_KEY"`
 	GoogleMapsGeocodingEnabled bool   `mapstructure:"GOOGLE_MAPS_GEOCODING_ENABLED"`
 	GoogleMapsTimeoutSeconds   int    `mapstructure:"GOOGLE_MAPS_TIMEOUT_SECONDS"`
+
+	// PermissionRequireTenantID closes the ADR 0002 transition window for the internal
+	// CheckPermission contract. While false (default) identity still answers callers that
+	// send only role_id and permission; once every caller sends tenant_id, enabling this
+	// makes tenant_id mandatory and rejects requests that omit it.
+	PermissionRequireTenantID bool `mapstructure:"PERMISSION_REQUIRE_TENANT_ID"`
 }
 
 func LoadConfig() (Config, error) {
@@ -57,6 +63,7 @@ func LoadConfig() (Config, error) {
 		"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PORT", "APP_URL",
 		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
+		"PERMISSION_REQUIRE_TENANT_ID",
 	} {
 		if err := viper.BindEnv(key); err != nil {
 			return Config{}, err
