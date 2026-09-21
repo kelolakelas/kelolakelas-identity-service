@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,8 +85,19 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 		return nil, err
 	}
 
-	// 5. Send invitation email
-	_ = u.emailService.SendInvitationEmail(emailAddr, token, tenant.Name)
+	// 5. Send the invitation email. A delivery failure never fails the stored
+	// invitation: the outcome is reported on the invitation and logged without
+	// the token so the tenant can be told the email did not arrive (KEL-36).
+	if err := u.emailService.SendInvitationEmail(emailAddr, token, tenant.Name); err != nil {
+		invitation.EmailSent = false
+		slog.ErrorContext(ctx, "invitation email delivery failed",
+			"invitation_id", invitation.ID,
+			"tenant_id", tenantID,
+			"error", err,
+		)
+	} else {
+		invitation.EmailSent = true
+	}
 
 	return invitation, nil
 }

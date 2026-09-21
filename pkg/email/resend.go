@@ -2,12 +2,19 @@ package email
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/resend/resend-go/v2"
 )
+
+// resendRequestTimeout bounds every Resend API call, including connection
+// establishment. Ten seconds is generous for a normal send while still
+// guaranteeing the invitation request cannot hang on a stalled provider.
+const resendRequestTimeout = 10 * time.Second
 
 type ResendEmailService struct {
 	client    *resend.Client
@@ -26,7 +33,10 @@ func NewResendEmailService(apiKey, fromEmail, appURL string) EmailService {
 		appURL = os.Getenv("APP_URL")
 	}
 
-	client := resend.NewClient(apiKey)
+	// resend.NewClient uses an http.Client without a timeout, which would let a
+	// stalled Resend call hold the invitation request open indefinitely. The
+	// custom client bounds every delivery attempt (KEL-36).
+	client := resend.NewCustomClient(&http.Client{Timeout: resendRequestTimeout}, apiKey)
 	return &ResendEmailService{
 		client:    client,
 		fromEmail: fromEmail,
