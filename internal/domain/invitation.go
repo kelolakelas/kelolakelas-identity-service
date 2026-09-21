@@ -27,6 +27,12 @@ type TenantInvitation struct {
 	ExpiresAt time.Time `gorm:"type:timestamp;not null" json:"expires_at"`
 	CreatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
+
+	// EmailSent reports whether the invitation email was delivered when the
+	// invitation was created. It is a transient response field: the delivery
+	// attempt is not part of the stored invitation state (KEL-36), so it is
+	// excluded from persistence and only populated in memory.
+	EmailSent bool `gorm:"-" json:"email_sent"`
 }
 
 func (TenantInvitation) TableName() string {

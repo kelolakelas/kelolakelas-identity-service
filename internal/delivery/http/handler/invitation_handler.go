@@ -35,6 +35,16 @@ type RegisterInvitedUserPayload struct {
 	Password  string `json:"password" binding:"required,min=6"`
 }
 
+// createInvitationMessage renders the 201 response message. A stored
+// invitation is a success either way; the message states whether the email
+// actually went out so the tenant knows when to resend it manually.
+func createInvitationMessage(emailSent bool) string {
+	if emailSent {
+		return "Invitation created and email sent successfully"
+	}
+	return "Invitation created but the email could not be sent. Please ask the member to contact support or resend the invitation later."
+}
+
 // CreateInvitation godoc
 // @Summary Create tenant invitation
 // @Description Invite a new member to join the tenant carried by the caller's access token
@@ -118,7 +128,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
-		"message": "Invitation created and email sent successfully",
+		"message": createInvitationMessage(invitation.EmailSent),
 		"data":    invitation,
 	})
 }
