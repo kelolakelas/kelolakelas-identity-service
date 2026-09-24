@@ -14,12 +14,13 @@ var (
 )
 
 type Claims struct {
-	UserID   uuid.UUID `json:"user_id"`
-	Email    string    `json:"email"`
-	TenantID uuid.UUID `json:"tenant_id,omitempty"`
-	RoleID   uuid.UUID `json:"role_id,omitempty"`
-	MemberID uuid.UUID `json:"member_id,omitempty"`
-	IsParent bool      `json:"is_parent,omitempty"`
+	UserID          uuid.UUID `json:"user_id"`
+	Email           string    `json:"email"`
+	TenantID        uuid.UUID `json:"tenant_id,omitempty"`
+	RoleID          uuid.UUID `json:"role_id,omitempty"`
+	MemberID        uuid.UUID `json:"member_id,omitempty"`
+	IsParent        bool      `json:"is_parent,omitempty"`
+	IsPlatformAdmin bool      `json:"is_platform_admin,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -49,6 +50,22 @@ func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID, rol
 		},
 	}
 
+	return s.sign(claims)
+}
+
+// GeneratePlatformToken issues a tenantless platform principal. Ordinary tenant
+// tokens cannot gain this claim through public registration or tenant roles.
+func (s *JWTService) GeneratePlatformToken(userID uuid.UUID, email string) (string, error) {
+	return s.sign(Claims{
+		UserID: userID, Email: email, IsPlatformAdmin: true,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.tokenDuration)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	})
+}
+
+func (s *JWTService) sign(claims Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(s.secretKey)
 }
