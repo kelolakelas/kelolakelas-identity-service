@@ -74,6 +74,7 @@ func main() {
 	memberRepo := repository.NewMemberRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
+	platformHandler := handler.NewPlatformHandler(usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService))
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
 	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient)
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, rbacRepo, memberRepo, emailService)
@@ -102,6 +103,7 @@ func main() {
 		// Public Auth & Invitation routes
 		apiV1.POST("/auth/register", authHandler.Register)
 		apiV1.POST("/auth/login", authHandler.Login)
+		apiV1.POST("/platform/auth/login", platformHandler.Login)
 		apiV1.POST("/tenants/register", authHandler.RegisterTenant)
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
 		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)
@@ -110,6 +112,8 @@ func main() {
 		protected := apiV1.Group("")
 		protected.Use(middleware.AuthMiddleware(jwtService))
 		{
+			protected.GET("/platform/me", platformHandler.Me)
+			protected.Use(middleware.RejectTenantlessPlatform())
 			protected.POST("/invitations", invitationHandler.CreateInvitation)
 			protected.GET("/members", memberHandler.ListMembers)
 			protected.GET("/tutors", memberHandler.ListTutors)
