@@ -73,7 +73,8 @@ func main() {
 	rbacRepo := repository.NewRbacRepository(db)
 	memberRepo := repository.NewMemberRepository(db)
 
-	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
+	resetStore := repository.NewPasswordResetRepository(db)
+	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService).WithPasswordReset(resetStore, emailService, time.Duration(cfg.PasswordResetTTLMinutes)*time.Minute)
 	platformAuth := usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService)
 	platformHandler := handler.NewPlatformHandler(platformAuth)
 	configurationHandler := handler.NewConfigurationHandler(usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)))
@@ -107,6 +108,9 @@ func main() {
 		// Public Auth & Invitation routes
 		apiV1.POST("/auth/register", authHandler.Register)
 		apiV1.POST("/auth/login", authHandler.Login)
+		apiV1.POST("/auth/password-reset/request", authHandler.RequestPasswordReset)
+		apiV1.POST("/auth/password-reset/confirm", authHandler.ConfirmPasswordReset)
+		apiV1.GET("/internal/session/check", handler.SessionCheck(jwtService, resetStore))
 		apiV1.POST("/platform/auth/login", platformHandler.Login)
 		apiV1.POST("/tenants/register", authHandler.RegisterTenant)
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)

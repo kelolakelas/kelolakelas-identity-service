@@ -37,16 +37,17 @@ type ErrorResponse struct {
 }
 
 type User struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Email        string         `gorm:"type:varchar(255);unique;not null" json:"email"`
-	PasswordHash string         `gorm:"type:varchar(255);not null" json:"-"`
-	FirstName    string         `gorm:"type:varchar(255);not null" json:"first_name"`
-	LastName     string         `gorm:"type:varchar(255);not null" json:"last_name"`
-	Phone        *string        `gorm:"type:varchar(50)" json:"phone,omitempty"`
-	IsParent     bool           `gorm:"type:boolean;default:false" json:"is_parent"`
-	CreatedAt    time.Time      `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
-	UpdatedAt    time.Time      `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Email             string         `gorm:"type:varchar(255);unique;not null" json:"email"`
+	PasswordHash      string         `gorm:"type:varchar(255);not null" json:"-"`
+	SessionValidAfter *time.Time     `gorm:"type:timestamptz" json:"-"`
+	FirstName         string         `gorm:"type:varchar(255);not null" json:"first_name"`
+	LastName          string         `gorm:"type:varchar(255);not null" json:"last_name"`
+	Phone             *string        `gorm:"type:varchar(50)" json:"phone,omitempty"`
+	IsParent          bool           `gorm:"type:boolean;default:false" json:"is_parent"`
+	CreatedAt         time.Time      `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
+	UpdatedAt         time.Time      `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
+	DeletedAt         gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 type UserRepository interface {
@@ -65,4 +66,6 @@ type AuthUsecase interface {
 	Register(ctx context.Context, user *User, password string) (*User, error)
 	RegisterInvitedUser(ctx context.Context, token, firstName, lastName, password string) (*User, error)
 	Login(ctx context.Context, email, password string) (string, *User, uuid.UUID, error)
+	RequestPasswordReset(ctx context.Context, email string) error
+	ConfirmPasswordReset(ctx context.Context, token, password string) error
 }

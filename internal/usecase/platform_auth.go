@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
@@ -36,7 +37,16 @@ func (a *PlatformAuth) Login(ctx context.Context, email, password string) (strin
 	if err := a.Check(ctx, user.ID); err != nil {
 		return "", err
 	}
-	return a.tokens.GeneratePlatformToken(user.ID, user.Email)
+	var validAfter *time.Time
+	if store, ok := a.users.(interface {
+		SessionValidAfter(context.Context, uuid.UUID) (*time.Time, error)
+	}); ok {
+		validAfter, err = store.SessionValidAfter(ctx, user.ID)
+		if err != nil {
+			return "", err
+		}
+	}
+	return a.tokens.GeneratePlatformTokenAfter(user.ID, user.Email, validAfter)
 }
 
 func (a *PlatformAuth) Check(ctx context.Context, userID uuid.UUID) error {

@@ -37,6 +37,14 @@ func NewJWTService(secretKey string, duration time.Duration) *JWTService {
 }
 
 func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID, roleID, memberID uuid.UUID, isParent bool) (string, error) {
+	return s.GenerateTokenAfter(userID, email, tenantID, roleID, memberID, isParent, nil)
+}
+
+func (s *JWTService) GenerateTokenAfter(userID uuid.UUID, email string, tenantID, roleID, memberID uuid.UUID, isParent bool, validAfter *time.Time) (string, error) {
+	issued := time.Now()
+	if validAfter != nil && issued.Before(*validAfter) {
+		issued = *validAfter
+	}
 	claims := Claims{
 		UserID:   userID,
 		Email:    email,
@@ -45,8 +53,8 @@ func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID, rol
 		MemberID: memberID,
 		IsParent: isParent,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.tokenDuration)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(issued.Add(s.tokenDuration)),
+			IssuedAt:  jwt.NewNumericDate(issued),
 		},
 	}
 
@@ -56,11 +64,19 @@ func (s *JWTService) GenerateToken(userID uuid.UUID, email string, tenantID, rol
 // GeneratePlatformToken issues a tenantless platform principal. Ordinary tenant
 // tokens cannot gain this claim through public registration or tenant roles.
 func (s *JWTService) GeneratePlatformToken(userID uuid.UUID, email string) (string, error) {
+	return s.GeneratePlatformTokenAfter(userID, email, nil)
+}
+
+func (s *JWTService) GeneratePlatformTokenAfter(userID uuid.UUID, email string, validAfter *time.Time) (string, error) {
+	issued := time.Now()
+	if validAfter != nil && issued.Before(*validAfter) {
+		issued = *validAfter
+	}
 	return s.sign(Claims{
 		UserID: userID, Email: email, IsPlatformAdmin: true,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.tokenDuration)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(issued.Add(s.tokenDuration)),
+			IssuedAt:  jwt.NewNumericDate(issued),
 		},
 	})
 }

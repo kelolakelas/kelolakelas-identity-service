@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -32,6 +33,7 @@ type Config struct {
 	AppURL                     string `mapstructure:"APP_URL"`
 	ResendAPIKey               string `mapstructure:"RESEND_API_KEY"`
 	ResendFromEmail            string `mapstructure:"RESEND_FROM_EMAIL"`
+	PasswordResetTTLMinutes    int    `mapstructure:"PASSWORD_RESET_TTL_MINUTES"`
 	GoogleMapsAPIKey           string `mapstructure:"GOOGLE_MAPS_API_KEY"`
 	GoogleMapsGeocodingEnabled bool   `mapstructure:"GOOGLE_MAPS_GEOCODING_ENABLED"`
 	GoogleMapsTimeoutSeconds   int    `mapstructure:"GOOGLE_MAPS_TIMEOUT_SECONDS"`
@@ -62,7 +64,7 @@ func LoadConfig() (Config, error) {
 	for _, key := range []string{
 		"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PORT", "APP_URL",
-		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
+		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "PASSWORD_RESET_TTL_MINUTES", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
 		"PERMISSION_REQUIRE_TENANT_ID",
 	} {
 		if err := viper.BindEnv(key); err != nil {
@@ -76,6 +78,14 @@ func LoadConfig() (Config, error) {
 		parsedRedisTLS, err = strconv.ParseBool(redisTLS)
 		if err != nil {
 			return Config{}, fmt.Errorf("REDIS_TLS must be a boolean: %w", err)
+		}
+	}
+	resetTTL := 60
+	if raw := viper.GetString("PASSWORD_RESET_TTL_MINUTES"); raw != "" {
+		var err error
+		resetTTL, err = strconv.Atoi(raw)
+		if err != nil || resetTTL <= 0 || int64(resetTTL) > int64((1<<63-1)/int64(time.Minute)) {
+			return Config{}, fmt.Errorf("PASSWORD_RESET_TTL_MINUTES must be a positive integer that fits a duration")
 		}
 	}
 	parsedRedisDB := 0
@@ -93,6 +103,7 @@ func LoadConfig() (Config, error) {
 	}
 	config.RedisTLS = parsedRedisTLS
 	config.RedisDB = parsedRedisDB
+	config.PasswordResetTTLMinutes = resetTTL
 	config.GoogleMapsGeocodingEnabled = viper.GetBool("GOOGLE_MAPS_GEOCODING_ENABLED")
 	config.GoogleMapsTimeoutSeconds = viper.GetInt("GOOGLE_MAPS_TIMEOUT_SECONDS")
 	if err := applyDatabaseURL(&config); err != nil {
