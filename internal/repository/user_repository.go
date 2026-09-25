@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/hash"
@@ -181,7 +182,7 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Fetch & validate invitation token
 		var invitation domain.TenantInvitation
-		if err := tx.Where("token = ?", token).First(&invitation).Error; err != nil {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("token = ?", token).First(&invitation).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return domain.ErrInvitationNotFound
 			}
@@ -203,7 +204,18 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 			return err
 		}
 		if invitedRole.TenantID == nil && invitedRole.Name == "Creator" {
-			return domain.ErrCreatorGrantForbidden
+			// Only a platform-approved, email-bound request may redeem a Creator invitation.
+			var approved int64
+			if err := tx.Model(&domain.CreatorRequest{}).Where("invitation_id = ? AND tenant_id = ? AND target_email = ? AND status = ? AND target_user_id IS NULL", invitation.ID, invitation.TenantID, invitation.Email, "approved").Count(&approved).Error; err != nil {
+				return err
+			}
+			if approved != 1 {
+				return domain.ErrCreatorGrantForbidden
+			}
+			var tenant domain.Tenant
+			if err := tx.Where("id = ? AND status = ? AND deleted_at IS NULL", invitation.TenantID, "active").First(&tenant).Error; err != nil {
+				return domain.ErrCreatorRequestStale
+			}
 		}
 
 		// Check if user with invitation email already exists

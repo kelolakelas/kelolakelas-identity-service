@@ -125,9 +125,17 @@ definitions:
     properties:
       created_at:
         type: string
+      decided_at:
+        type: string
+      decided_by:
+        type: string
       id:
         type: string
+      invitation_id:
+        type: string
       reason:
+        type: string
+      rejection_reason:
         type: string
       requester_user_id:
         type: string
@@ -588,6 +596,13 @@ definitions:
       target_email:
         type: string
       target_user_id:
+        type: string
+    required:
+    - reason
+    type: object
+  internal_delivery_http_handler.rejectCreatorPayload:
+    properties:
+      reason:
         type: string
     required:
     - reason
@@ -1317,6 +1332,106 @@ paths:
       summary: Record a configuration application status acknowledgement
       tags:
       - Platform Configuration
+  /api/v1/platform/creator-requests/{id}/approve:
+    post:
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreatorRequest'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a pending Creator request as active platform admin
+      tags:
+      - Creator Requests
+  /api/v1/platform/creator-requests/{id}/reject:
+    post:
+      parameters:
+      - description: Request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_delivery_http_handler.rejectCreatorPayload'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreatorRequest'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject a pending Creator request as active platform admin
+      tags:
+      - Creator Requests
   /api/v1/roles:
     get:
       consumes:

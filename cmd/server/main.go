@@ -88,6 +88,7 @@ func main() {
 	roleHandler := handler.NewRoleHandler(roleUsecase)
 	memberHandler := handler.NewMemberHandler(memberUsecase)
 	creatorRequestHandler := handler.NewCreatorRequestHandler(usecase.NewCreatorRequestUsecase(repository.NewCreatorRequestRepository(db)))
+	creatorDecisionHandler := handler.NewCreatorDecisionHandler(usecase.NewCreatorDecisionUsecase(repository.NewCreatorDecisionRepository(db), emailService))
 	tenantHandler := handler.NewTenantHandler(tenantUsecase)
 
 	// Gin Router
@@ -120,6 +121,8 @@ func main() {
 		platform.GET("/configurations/:application/:key/history", configurationHandler.History)
 		platform.POST("/configurations/:application/:key/versions", configurationHandler.CreateVersion)
 		platform.POST("/configurations/reports", configurationHandler.RecordReport)
+		platform.POST("/creator-requests/:id/approve", creatorDecisionHandler.Approve)
+		platform.POST("/creator-requests/:id/reject", creatorDecisionHandler.Reject)
 
 		// Protected tenant routes reject tenantless platform principals.
 		protected := apiV1.Group("")
