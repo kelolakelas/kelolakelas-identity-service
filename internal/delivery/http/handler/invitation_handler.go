@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -148,9 +149,13 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 			})
 			return
 		}
+		// KEL-61: the raw usecase error may carry internal details (driver
+		// messages, constraint names), so it is logged server-side and the
+		// client only ever sees a fixed generic message.
+		slog.ErrorContext(c.Request.Context(), "invitation creation failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Failed to create invitation: " + err.Error(),
+			"message": "Failed to create invitation",
 			"data":    nil,
 		})
 		return
@@ -369,9 +374,13 @@ func (h *InvitationHandler) RegisterInvitedUser(c *gin.Context) {
 			})
 			return
 		}
+		// KEL-61: the raw usecase error may carry internal details (driver
+		// messages, constraint names), so it is logged server-side and the
+		// client only ever sees a fixed generic message.
+		slog.ErrorContext(c.Request.Context(), "invited user registration failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Failed to register invited user: " + err.Error(),
+			"message": "Failed to register invited user",
 			"data":    nil,
 		})
 		return
