@@ -68,6 +68,7 @@ func (h *TenantHandler) GetSettings(c *gin.Context) {
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 403 {object} domain.ErrorResponse
 // @Failure 404 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/tenant/settings [patch]
 // @Router /api/v1/tenants/settings [patch]
@@ -85,6 +86,10 @@ func (h *TenantHandler) UpdateSettings(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, domain.ErrPermissionDenied) {
 			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+			return
+		}
+		if errors.Is(err, domain.ErrTenantNameAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"status": "error", "message": "Tenant with this name already exists", "data": nil})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to update tenant settings", "data": nil})

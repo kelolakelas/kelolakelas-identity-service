@@ -52,8 +52,8 @@ func invitationResponse(invitation domain.TenantInvitation) InvitationResponse {
 
 type RegisterInvitedUserPayload struct {
 	Token     string `json:"token" binding:"required"`
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
+	FirstName string `json:"first_name" binding:"required,max=255"`
+	LastName  string `json:"last_name" binding:"required,max=255"`
 	Password  string `json:"password" binding:"required,min=6"`
 }
 
@@ -323,6 +323,11 @@ func (h *InvitationHandler) RegisterInvitedUser(c *gin.Context) {
 			"message": err.Error(),
 			"data":    nil,
 		})
+		return
+	}
+
+	if len(payload.Password) > 72 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Password exceeds 72 bytes", "data": nil})
 		return
 	}
 

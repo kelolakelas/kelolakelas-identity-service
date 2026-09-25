@@ -24,9 +24,9 @@ func NewAuthHandler(authUsecase domain.AuthUsecase, tenantUsecase domain.TenantU
 type RegisterPayload struct {
 	Email     string  `json:"email" binding:"required,email"`
 	Password  string  `json:"password" binding:"required,min=6"`
-	FirstName string  `json:"first_name" binding:"required"`
-	LastName  string  `json:"last_name" binding:"required"`
-	Phone     *string `json:"phone"`
+	FirstName string  `json:"first_name" binding:"required,max=255"`
+	LastName  string  `json:"last_name" binding:"required,max=255"`
+	Phone     *string `json:"phone" binding:"omitempty,max=50"`
 	IsParent  bool    `json:"is_parent"`
 }
 
@@ -114,6 +114,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			"message": err.Error(),
 			"data":    nil,
 		})
+		return
+	}
+	if len(payload.Password) > 72 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Password exceeds 72 bytes", "data": nil})
 		return
 	}
 
@@ -222,6 +226,11 @@ func (h *AuthHandler) RegisterTenant(c *gin.Context) {
 			"message": err.Error(),
 			"data":    nil,
 		})
+		return
+	}
+
+	if len(payload.Password) > 72 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Password exceeds 72 bytes", "data": nil})
 		return
 	}
 

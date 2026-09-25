@@ -168,6 +168,13 @@ func (u *tenantUsecase) UpdateTenantSettings(ctx context.Context, id, callerRole
 	if err != nil {
 		return nil, err
 	}
+	nameExists, err := u.tenantRepo.IsNameExistsExcept(ctx, req.Name, id)
+	if err != nil {
+		return nil, err
+	}
+	if nameExists {
+		return nil, domain.ErrTenantNameAlreadyExists
+	}
 	addressChanged := valueOrEmpty(tenant.Address) != valueOrEmpty(req.Address)
 	tenant.Name = req.Name
 	tenant.Phone = req.Phone
