@@ -145,15 +145,35 @@ RETURNING id, application, environment, config_key, version, value, created_by, 
 
 func (r *configurationRepository) RecordConfigurationReport(ctx context.Context, request domain.ConfigurationReportRequest) (domain.ConfigurationReport, error) {
 	var report domain.ConfigurationReport
-	const insert = `
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Serialize an applied registration-policy acknowledgement against
+		// registrations holding FOR SHARE on this head. Resolve the version
+		// before locking so unrelated configuration reports remain independent.
+		var application, environment, key string
+		if err := tx.Raw(`SELECT application, environment, config_key FROM configuration_versions WHERE id = ?`, request.VersionID).Row().Scan(&application, &environment, &key); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return domain.ErrConfigurationVersionNotFound
+			}
+			return err
+		}
+		if application == domain.TenantOnboardingApplication && environment == domain.TenantRegistrationEnvironment && key == domain.TenantRegistrationOpenKey && request.Status == domain.ConfigurationStatusApplied {
+			var head int64
+			if err := tx.Raw(`SELECT latest_version FROM configuration_heads WHERE application = ? AND environment = ? AND config_key = ? FOR UPDATE`, application, environment, key).Row().Scan(&head); err != nil {
+				return err
+			}
+		}
+		const insert = `
 INSERT INTO configuration_reports (version_id, status, reported_by)
 SELECT id, ?, ? FROM configuration_versions WHERE id = ?
 RETURNING id, version_id, status, reported_by, created_at`
-	row := r.db.WithContext(ctx).Raw(insert, request.Status, request.ReportedBy, request.VersionID).Row()
-	err := row.Scan(&report.ID, &report.VersionID, &report.Status, &report.ReportedBy, &report.CreatedAt)
-	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ConfigurationReport{}, domain.ErrConfigurationVersionNotFound
-	}
+		if err := tx.Raw(insert, request.Status, request.ReportedBy, request.VersionID).Row().Scan(&report.ID, &report.VersionID, &report.Status, &report.ReportedBy, &report.CreatedAt); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return domain.ErrConfigurationVersionNotFound
+			}
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return domain.ConfigurationReport{}, err
 	}

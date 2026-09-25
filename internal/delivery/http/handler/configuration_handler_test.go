@@ -46,10 +46,29 @@ func (r *configurationRepositoryStub) RecordConfigurationReport(context.Context,
 	return r.report, nil
 }
 
+// registrationPolicyStub satisfies domain.RegistrationPolicy for handler
+// tests that exercise the inventory, history, and version endpoints.
+type registrationPolicyStub struct {
+	evaluate func(context.Context) (domain.RegistrationPolicyEvaluated, error)
+}
+
+func (s *registrationPolicyStub) Evaluate(ctx context.Context) (domain.RegistrationPolicyEvaluated, error) {
+	if s.evaluate != nil {
+		return s.evaluate(ctx)
+	}
+	return domain.RegistrationPolicyEvaluated{Application: domain.TenantOnboardingApplication, Key: domain.TenantRegistrationOpenKey, Environment: domain.TenantRegistrationEnvironment, Open: true}, nil
+}
+func (s *registrationPolicyStub) Close(_ context.Context, _ uuid.UUID) (domain.RegistrationPolicyEvaluated, error) {
+	return domain.RegistrationPolicyEvaluated{Application: domain.TenantOnboardingApplication, Key: domain.TenantRegistrationOpenKey, Environment: domain.TenantRegistrationEnvironment}, nil
+}
+func (s *registrationPolicyStub) Open(_ context.Context, _ uuid.UUID) (domain.RegistrationPolicyEvaluated, error) {
+	return domain.RegistrationPolicyEvaluated{Application: domain.TenantOnboardingApplication, Key: domain.TenantRegistrationOpenKey, Environment: domain.TenantRegistrationEnvironment, Open: true}, nil
+}
+
 func configurationHandlerRouter(repository domain.ConfigurationRepository) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	controlPlane := usecase.NewConfigurationControlPlane(repository)
-	handler := NewConfigurationHandler(controlPlane)
+	handler := NewConfigurationHandler(controlPlane, &registrationPolicyStub{})
 	operator := uuid.New()
 	router := gin.New()
 	addOperator := func(c *gin.Context) {

@@ -1532,6 +1532,174 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/platform/registration-policy": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the effective open/closed state with the applied and desired configuration versions that decided it.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Read the new-tenant registration policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/registration-policy/close": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Appends a desired configuration version that closes registration. Registration stops once the operator acknowledges the version as applied.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Close new-tenant registration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/registration-policy/open": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Appends a desired configuration version that reopens registration. Registration resumes once the operator acknowledges the version as applied.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Reopen new-tenant registration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/roles": {
             "get": {
                 "security": [
@@ -1960,6 +2128,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2150,6 +2324,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "New tenant registration is currently closed",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {
@@ -2284,6 +2464,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
@@ -2749,26 +2935,31 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "password": {
                     "type": "string",
                     "minLength": 6
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 },
                 "tenant_address": {
                     "type": "string"
                 },
                 "tenant_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "tenant_phone": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },
@@ -2786,6 +2977,29 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.User"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "applied_version": {
+                    "type": "integer"
+                },
+                "desired_version": {
+                    "type": "integer"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "open": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3010,7 +3224,8 @@ const docTemplate = `{
                     "maxLength": 500
                 },
                 "google_place_id": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "latitude": {
                     "type": "number"
@@ -3036,10 +3251,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },
@@ -3193,10 +3410,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "password": {
                     "type": "string",
@@ -3220,20 +3439,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "is_parent": {
                     "type": "boolean"
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "password": {
                     "type": "string",
                     "minLength": 6
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },

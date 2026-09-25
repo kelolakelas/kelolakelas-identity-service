@@ -14,10 +14,13 @@ import (
 
 type ConfigurationHandler struct {
 	controlPlane *usecase.ConfigurationControlPlane
+	// registrationPolicy is required; every constructor sets it. It may be
+	// nil only in tests that never exercise the registration-policy actions.
+	registrationPolicy domain.RegistrationPolicy
 }
 
-func NewConfigurationHandler(controlPlane *usecase.ConfigurationControlPlane) *ConfigurationHandler {
-	return &ConfigurationHandler{controlPlane: controlPlane}
+func NewConfigurationHandler(controlPlane *usecase.ConfigurationControlPlane, registrationPolicy domain.RegistrationPolicy) *ConfigurationHandler {
+	return &ConfigurationHandler{controlPlane: controlPlane, registrationPolicy: registrationPolicy}
 }
 
 // Inventory godoc
@@ -57,7 +60,7 @@ func (h *ConfigurationHandler) Inventory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": inventory})
 }
 
-// History godoc
+// ListConfigurationVersions godoc
 // @Summary Read configuration version and report history
 // @Tags Platform Configuration
 // @Security BearerAuth
@@ -192,4 +195,78 @@ func (h *ConfigurationHandler) RecordReport(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"status": "success", "data": report})
+}
+
+// RegistrationPolicy godoc
+// @Summary Read the new-tenant registration policy
+// @Description Returns the effective open/closed state with the applied and desired configuration versions that decided it.
+// @Tags Platform Configuration
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=domain.RegistrationPolicyEvaluated}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/platform/registration-policy [get]
+func (h *ConfigurationHandler) RegistrationPolicy(c *gin.Context) {
+	evaluated, err := h.registrationPolicy.Evaluate(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Registration policy unavailable", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": evaluated})
+}
+
+// CloseRegistration godoc
+// @Summary Close new-tenant registration
+// @Description Appends a desired configuration version that closes registration. Registration stops once the operator acknowledges the version as applied.
+// @Tags Platform Configuration
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=domain.RegistrationPolicyEvaluated}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/platform/registration-policy/close [post]
+func (h *ConfigurationHandler) CloseRegistration(c *gin.Context) {
+	h.mutateRegistration(c, false)
+}
+
+// OpenRegistration godoc
+// @Summary Reopen new-tenant registration
+// @Description Appends a desired configuration version that reopens registration. Registration resumes once the operator acknowledges the version as applied.
+// @Tags Platform Configuration
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=domain.RegistrationPolicyEvaluated}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 409 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/platform/registration-policy/open [post]
+func (h *ConfigurationHandler) OpenRegistration(c *gin.Context) {
+	h.mutateRegistration(c, true)
+}
+
+func (h *ConfigurationHandler) mutateRegistration(c *gin.Context, open bool) {
+	operator, ok := c.Get("user_id")
+	operatorID, valid := operator.(uuid.UUID)
+	if !ok || !valid || operatorID == uuid.Nil {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Platform access required", "data": nil})
+		return
+	}
+	var evaluated domain.RegistrationPolicyEvaluated
+	var err error
+	if open {
+		evaluated, err = h.registrationPolicy.Open(c.Request.Context(), operatorID)
+	} else {
+		evaluated, err = h.registrationPolicy.Close(c.Request.Context(), operatorID)
+	}
+	if errors.Is(err, domain.ErrConfigurationVersionConflict) {
+		c.JSON(http.StatusConflict, gin.H{"status": "error", "message": "Registration policy changed concurrently; read it again and retry", "data": nil})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Registration policy was not updated", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": evaluated})
 }

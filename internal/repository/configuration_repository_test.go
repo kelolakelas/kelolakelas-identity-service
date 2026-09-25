@@ -113,9 +113,11 @@ func TestListConfigurationStateKeepsLatestFailureAndAppliedVersion(t *testing.T)
 
 func TestRecordConfigurationReportDoesNotSucceedForUnknownVersion(t *testing.T) {
 	repository, mock := newConfigurationRepositoryWithMock(t)
-	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO configuration_reports")).
-		WithArgs(string(domain.ConfigurationStatusApplied), sqlmock.AnyArg(), int64(999)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "version_id", "status", "reported_by", "created_at"}))
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT application, environment, config_key FROM configuration_versions WHERE id = $1")).
+		WithArgs(int64(999)).
+		WillReturnRows(sqlmock.NewRows([]string{"application", "environment", "config_key"}))
+	mock.ExpectRollback()
 
 	_, err := repository.RecordConfigurationReport(context.Background(), domain.ConfigurationReportRequest{
 		VersionID: 999, Status: domain.ConfigurationStatusApplied, ReportedBy: uuid.New(),

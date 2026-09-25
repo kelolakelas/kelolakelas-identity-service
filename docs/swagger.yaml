@@ -242,19 +242,24 @@ definitions:
       email:
         type: string
       first_name:
+        maxLength: 255
         type: string
       last_name:
+        maxLength: 255
         type: string
       password:
         minLength: 6
         type: string
       phone:
+        maxLength: 50
         type: string
       tenant_address:
         type: string
       tenant_name:
+        maxLength: 255
         type: string
       tenant_phone:
+        maxLength: 50
         type: string
     required:
     - email
@@ -273,6 +278,21 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.User'
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated:
+    properties:
+      application:
+        type: string
+      applied_version:
+        type: integer
+      desired_version:
+        type: integer
+      environment:
+        type: string
+      key:
+        type: string
+      open:
+        type: boolean
     type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RoleResponse:
     properties:
@@ -422,6 +442,7 @@ definitions:
         maxLength: 500
         type: string
       google_place_id:
+        maxLength: 255
         type: string
       latitude:
         type: number
@@ -439,8 +460,10 @@ definitions:
       address:
         type: string
       name:
+        maxLength: 255
         type: string
       phone:
+        maxLength: 50
         type: string
     required:
     - name
@@ -540,8 +563,10 @@ definitions:
   internal_delivery_http_handler.RegisterInvitedUserPayload:
     properties:
       first_name:
+        maxLength: 255
         type: string
       last_name:
+        maxLength: 255
         type: string
       password:
         minLength: 6
@@ -559,15 +584,18 @@ definitions:
       email:
         type: string
       first_name:
+        maxLength: 255
         type: string
       is_parent:
         type: boolean
       last_name:
+        maxLength: 255
         type: string
       password:
         minLength: 6
         type: string
       phone:
+        maxLength: 50
         type: string
     required:
     - email
@@ -1581,6 +1609,107 @@ paths:
       summary: Reject a pending Creator request as active platform admin
       tags:
       - Creator Requests
+  /api/v1/platform/registration-policy:
+    get:
+      description: Returns the effective open/closed state with the applied and desired
+        configuration versions that decided it.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Read the new-tenant registration policy
+      tags:
+      - Platform Configuration
+  /api/v1/platform/registration-policy/close:
+    post:
+      description: Appends a desired configuration version that closes registration.
+        Registration stops once the operator acknowledges the version as applied.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Close new-tenant registration
+      tags:
+      - Platform Configuration
+  /api/v1/platform/registration-policy/open:
+    post:
+      description: Appends a desired configuration version that reopens registration.
+        Registration resumes once the operator acknowledges the version as applied.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegistrationPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reopen new-tenant registration
+      tags:
+      - Platform Configuration
   /api/v1/roles:
     get:
       consumes:
@@ -1846,6 +1975,10 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1962,6 +2095,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: New tenant registration is currently closed
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "409":
           description: Conflict
           schema:
@@ -2040,6 +2177,10 @@ paths:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
         "500":

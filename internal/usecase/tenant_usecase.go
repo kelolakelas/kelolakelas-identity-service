@@ -21,6 +21,8 @@ type tenantUsecase struct {
 	jwtService   *jwt.JWTService
 	redisService *database.RedisService
 	mapsClient   maps.MapsClient
+	// Registration requires a policy; a missing policy fails closed.
+	registrationPolicy domain.RegistrationPolicy
 }
 
 func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, permissions PermissionChecker, jwtService *jwt.JWTService, redisService *database.RedisService, mapsClient maps.MapsClient) domain.TenantUsecase {
@@ -32,6 +34,15 @@ func NewTenantUsecase(userRepo domain.UserRepository, tenantRepo repository.Tena
 		redisService: redisService,
 		mapsClient:   mapsClient,
 	}
+}
+
+// NewTenantUsecaseWithRegistrationPolicy is the production constructor: it
+// wires the KEL-97 registration policy so registrations consult the effective
+// platform setting before any record is created.
+func NewTenantUsecaseWithRegistrationPolicy(userRepo domain.UserRepository, tenantRepo repository.TenantRepository, permissions PermissionChecker, jwtService *jwt.JWTService, redisService *database.RedisService, mapsClient maps.MapsClient, registrationPolicy domain.RegistrationPolicy) domain.TenantUsecase {
+	usecase := NewTenantUsecase(userRepo, tenantRepo, permissions, jwtService, redisService, mapsClient).(*tenantUsecase)
+	usecase.registrationPolicy = registrationPolicy
+	return usecase
 }
 
 func (u *tenantUsecase) GetTenantLocation(ctx context.Context, id uuid.UUID) (*domain.TenantLocation, error) {
@@ -91,6 +102,20 @@ func stringPtr(value string) *string {
 }
 
 func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.RegisterTenantRequest) (*domain.RegisterTenantResponse, error) {
+	// KEL-97: consult the effective registration policy before any record is
+	// created. A closed or undecidable policy rejects with the stable domain
+	// error while user, tenant, wallet, and Creator rows stay untouched.
+	if u.registrationPolicy == nil {
+		return nil, domain.ErrRegistrationClosed
+	}
+	policy, err := u.registrationPolicy.Evaluate(ctx)
+	if err != nil {
+		return nil, domain.ErrRegistrationClosed
+	}
+	if !policy.Open {
+		return nil, domain.ErrRegistrationClosed
+	}
+
 	// Check if tenant name already exists
 	nameExists, err := u.tenantRepo.IsNameExists(ctx, req.TenantName)
 	if err != nil {
@@ -130,7 +155,9 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 		Status:  "active",
 	}
 
-	// Save using GORM transaction
+	// Save using GORM transaction. The policy is re-checked inside the
+	// transaction: an applied close that acquired the head lock first rejects
+	// without writes; otherwise the close waits until registration commits.
 	member, err := u.userRepo.RegisterTenantTx(ctx, user, tenant)
 	if err != nil {
 		return nil, err
