@@ -12,6 +12,9 @@ var (
 	ErrCreatorRequestDuplicate     = errors.New("pending creator request already exists")
 	ErrCreatorTargetAlreadyCreator = errors.New("target is already a creator")
 	ErrCreatorRequestInvalid       = errors.New("invalid creator request target or reason")
+	ErrCreatorRequestNotFound      = errors.New("creator request not found")
+	ErrCreatorRequestDecided       = errors.New("creator request already decided")
+	ErrCreatorRequestStale         = errors.New("creator request target or tenant no longer valid")
 )
 
 type CreatorRequest struct {
@@ -22,6 +25,10 @@ type CreatorRequest struct {
 	TargetUserID    *uuid.UUID `json:"target_user_id,omitempty" gorm:"type:uuid"`
 	Reason          string     `json:"reason" gorm:"not null"`
 	Status          string     `json:"status" gorm:"not null"`
+	DecidedBy       *uuid.UUID `json:"decided_by,omitempty" gorm:"type:uuid"`
+	DecidedAt       *time.Time `json:"decided_at,omitempty"`
+	RejectionReason *string    `json:"rejection_reason,omitempty"`
+	InvitationID    *uuid.UUID `json:"invitation_id,omitempty" gorm:"type:uuid"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 }

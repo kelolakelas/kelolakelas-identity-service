@@ -39,6 +39,7 @@ func TestLegacyCreatorInvitationCannotBeRedeemed(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"tenant_invitations\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "role_id", "token", "is_used", "expires_at"}).AddRow(uuid.New(), role, token, false, time.Now().Add(time.Hour)))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"roles\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tenant_id"}).AddRow(role, "Creator", nil))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM \"creator_requests\"")).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectRollback()
 	result, err := store.RegisterInvitedUserTx(context.Background(), token, "First", "Last", "password")
 	if !errors.Is(err, domain.ErrCreatorGrantForbidden) || result != nil {
