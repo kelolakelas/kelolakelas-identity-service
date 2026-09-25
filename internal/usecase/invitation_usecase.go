@@ -51,13 +51,14 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 		return nil, err
 	}
 
-	// 1. Check if user already exists and is a member of this tenant
+	// Registration via invitation creates a new account; any existing account
+	// would be unable to redeem the token. Do not send an unusable invitation.
 	user, err := u.userRepo.GetByEmail(ctx, emailAddr)
-	if err == nil && user != nil {
-		member, err := u.userRepo.GetTenantMemberByUserID(ctx, user.ID)
-		if err == nil && member != nil && member.TenantID == tenantID {
-			return nil, domain.ErrAlreadyTenantMember
-		}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
+	}
+	if user != nil {
+		return nil, domain.ErrUserAlreadyExists
 	}
 
 	// 2. Fetch tenant to get tenant name
@@ -81,7 +82,7 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 	}
 
 	// 4. Insert into database
-	if err := u.invitationRepo.Create(ctx, invitation); err != nil {
+	if err := u.invitationRepo.ReplaceActive(ctx, invitation); err != nil {
 		return nil, err
 	}
 
@@ -126,6 +127,20 @@ func (u *invitationUsecase) validateInvitableRole(ctx context.Context, tenantID,
 		return domain.ErrInvitationRoleInvalid
 	}
 	return nil
+}
+
+func (u *invitationUsecase) ListInvitations(ctx context.Context, tenantID, callerRoleID uuid.UUID) ([]domain.TenantInvitation, error) {
+	if err := requirePermission(ctx, u.permissions, tenantID, callerRoleID, "member:invite"); err != nil {
+		return nil, err
+	}
+	return u.invitationRepo.ListPending(ctx, tenantID)
+}
+
+func (u *invitationUsecase) RevokeInvitation(ctx context.Context, tenantID, callerRoleID, invitationID uuid.UUID) error {
+	if err := requirePermission(ctx, u.permissions, tenantID, callerRoleID, "member:invite"); err != nil {
+		return err
+	}
+	return u.invitationRepo.Revoke(ctx, tenantID, invitationID)
 }
 
 func (u *invitationUsecase) VerifyInvitation(ctx context.Context, token string) (*domain.TenantInvitation, error) {

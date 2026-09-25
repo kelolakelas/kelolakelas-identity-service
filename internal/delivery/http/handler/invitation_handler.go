@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,6 +27,27 @@ func NewInvitationHandler(invitationUsecase usecase.InvitationUsecase, authUseca
 type CreateInvitationPayload struct {
 	RoleID uuid.UUID `json:"role_id" binding:"required"`
 	Email  string    `json:"email" binding:"required,email"`
+}
+
+// InvitationResponse intentionally never serializes the bearer token.
+type InvitationResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	RoleID    uuid.UUID `json:"role_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+	Status    string    `json:"status"`
+	EmailSent bool      `json:"email_sent"`
+}
+
+func invitationResponse(invitation domain.TenantInvitation) InvitationResponse {
+	status := "active"
+	if !time.Now().Before(invitation.ExpiresAt) {
+		status = "expired"
+	}
+	return InvitationResponse{
+		ID: invitation.ID, Email: invitation.Email, RoleID: invitation.RoleID,
+		ExpiresAt: invitation.ExpiresAt, Status: status, EmailSent: invitation.EmailSent,
+	}
 }
 
 type RegisterInvitedUserPayload struct {
@@ -54,7 +76,7 @@ func createInvitationMessage(emailSent bool) string {
 // @Produce json
 // @Security BearerAuth
 // @Param request body CreateInvitationPayload true "Create invitation payload"
-// @Success 201 {object} domain.HTTPResponse{data=domain.TenantInvitation}
+// @Success 201 {object} domain.HTTPResponse{data=InvitationResponse}
 // @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
 // @Failure 403 {object} domain.ErrorResponse
@@ -114,6 +136,10 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 			})
 			return
 		}
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"status": "error", "message": "User with this email already exists", "data": nil})
+			return
+		}
 		if errors.Is(err, domain.ErrInvitationRoleInvalid) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status":  "error",
@@ -133,8 +159,83 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": createInvitationMessage(invitation.EmailSent),
-		"data":    invitation,
+		"data":    invitationResponse(*invitation),
 	})
+}
+
+func invitationTenantID(c *gin.Context) (uuid.UUID, bool) {
+	value, exists := c.Get("tenant_id")
+	id, ok := value.(uuid.UUID)
+	return id, exists && ok && id != uuid.Nil
+}
+
+// ListInvitations godoc
+// @Summary List unredeemed tenant invitations
+// @Tags Invitations
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=[]InvitationResponse}
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/invitations [get]
+func (h *InvitationHandler) ListInvitations(c *gin.Context) {
+	tenantID, ok := invitationTenantID(c)
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Tenant context required", "data": nil})
+		return
+	}
+	invitations, err := h.invitationUsecase.ListInvitations(c.Request.Context(), tenantID, extractCallerRoleID(c))
+	if err != nil {
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to list invitations", "data": nil})
+		}
+		return
+	}
+	data := make([]InvitationResponse, 0, len(invitations))
+	for _, invitation := range invitations {
+		data = append(data, invitationResponse(invitation))
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": data})
+}
+
+// RevokeInvitation godoc
+// @Summary Revoke an unredeemed tenant invitation
+// @Tags Invitations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Invitation ID"
+// @Success 204
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/invitations/{id} [delete]
+func (h *InvitationHandler) RevokeInvitation(c *gin.Context) {
+	tenantID, ok := invitationTenantID(c)
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Tenant context required", "data": nil})
+		return
+	}
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid invitation ID", "data": nil})
+		return
+	}
+	if err := h.invitationUsecase.RevokeInvitation(c.Request.Context(), tenantID, extractCallerRoleID(c), id); err != nil {
+		switch {
+		case errors.Is(err, domain.ErrPermissionDenied):
+			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		case errors.Is(err, domain.ErrInvitationNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Invitation not found", "data": nil})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to revoke invitation", "data": nil})
+		}
+		return
+	}
+	c.Status(http.StatusNoContent)
+	c.Writer.WriteHeaderNow()
 }
 
 // VerifyInvitation godoc

@@ -31,6 +31,12 @@ func (u *deliveryStatusInvitationUsecase) CreateInvitation(context.Context, uuid
 func (*deliveryStatusInvitationUsecase) VerifyInvitation(context.Context, string) (*domain.TenantInvitation, error) {
 	return nil, domain.ErrInvitationNotFound
 }
+func (*deliveryStatusInvitationUsecase) ListInvitations(context.Context, uuid.UUID, uuid.UUID) ([]domain.TenantInvitation, error) {
+	return nil, nil
+}
+func (*deliveryStatusInvitationUsecase) RevokeInvitation(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error {
+	return nil
+}
 
 func performCreateInvitation(usecase usecase.InvitationUsecase) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
