@@ -80,6 +80,19 @@ func (r *userRepository) RegisterTenantTx(ctx context.Context, user *domain.User
 	var member domain.TenantMember
 
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Hold a shared lock on the policy head through commit. Applying a
+		// version takes an exclusive lock on this same row; whichever lock
+		// wins determines the ordering of close and registration. Read the
+		// applied value on this transaction's connection, never a separate
+		// connection that could observe a stale policy.
+		open, err := registrationOpenInTx(tx)
+		if err != nil {
+			return domain.ErrRegistrationClosed
+		}
+		if !open {
+			return domain.ErrRegistrationClosed
+		}
+
 		// 1. Create User
 		if err := tx.Create(user).Error; err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {

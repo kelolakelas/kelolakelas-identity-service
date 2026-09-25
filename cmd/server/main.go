@@ -77,9 +77,13 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService).WithPasswordReset(resetStore, emailService, time.Duration(cfg.PasswordResetTTLMinutes)*time.Minute)
 	platformAuth := usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService)
 	platformHandler := handler.NewPlatformHandler(platformAuth)
-	configurationHandler := handler.NewConfigurationHandler(usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)))
+	configurationHandler := handler.NewConfigurationHandler(
+		usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)),
+		usecase.NewRegistrationPolicy(repository.NewConfigurationRepository(db)),
+	)
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
-	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient)
+	tenantUsecase := usecase.NewTenantUsecaseWithRegistrationPolicy(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient,
+		usecase.NewRegistrationPolicy(repository.NewConfigurationRepository(db)))
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, rbacRepo, memberRepo, emailService)
 	roleUsecase := usecase.NewRoleUsecase(rbacRepo, memberRepo)
 	memberUsecase := usecase.NewMemberUsecase(memberRepo)
@@ -125,6 +129,9 @@ func main() {
 		platform.GET("/configurations/:application/:key/history", configurationHandler.History)
 		platform.POST("/configurations/:application/:key/versions", configurationHandler.CreateVersion)
 		platform.POST("/configurations/reports", configurationHandler.RecordReport)
+		platform.GET("/registration-policy", configurationHandler.RegistrationPolicy)
+		platform.POST("/registration-policy/close", configurationHandler.CloseRegistration)
+		platform.POST("/registration-policy/open", configurationHandler.OpenRegistration)
 		platform.POST("/creator-requests/:id/approve", creatorDecisionHandler.Approve)
 		platform.POST("/creator-requests/:id/reject", creatorDecisionHandler.Reject)
 

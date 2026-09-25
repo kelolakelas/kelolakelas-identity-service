@@ -215,6 +215,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Param request body domain.RegisterTenantRequest true "Register tenant payload"
 // @Success 201 {object} domain.HTTPResponse{data=domain.RegisterTenantResponse}
 // @Failure 400 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse "New tenant registration is currently closed"
 // @Failure 409 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/tenants/register [post]
@@ -236,6 +237,17 @@ func (h *AuthHandler) RegisterTenant(c *gin.Context) {
 
 	res, err := h.tenantUsecase.RegisterTenant(c.Request.Context(), &payload)
 	if err != nil {
+		if errors.Is(err, domain.ErrRegistrationClosed) {
+			// Stable domain rejection (KEL-97): the same status and message
+			// reach clients through the gateway's pass-through proxy, so a
+			// client can branch on it in either deployment shape.
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": domain.RegistrationClosedMessage,
+				"data":    nil,
+			})
+			return
+		}
 		if errors.Is(err, domain.ErrTenantNameAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"status":  "error",
