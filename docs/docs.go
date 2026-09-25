@@ -722,6 +722,329 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/platform/configurations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists metadata and current version state for all five applications. Sensitive values are never managed or returned.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Read configuration inventory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Deployment environment",
+                        "name": "environment",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/configurations/reports": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Records a platform operator's applied, failed, or rollback acknowledgement. This endpoint does not apply or roll back runtime configuration.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Record a configuration application status acknowledgement",
+                "parameters": [
+                    {
+                        "description": "Configuration report",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_delivery_http_handler.configurationReportPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/configurations/{application}/{key}/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Read configuration version and report history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Application identifier",
+                        "name": "application",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deployment environment",
+                        "name": "environment",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationHistory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/configurations/{application}/{key}/versions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Stores a validated non-secret requested value or creates a new version from a manual rollback target. This endpoint never applies runtime configuration.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Create a requested configuration version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Application identifier",
+                        "name": "application",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Configuration version request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_delivery_http_handler.createConfigurationVersionPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/roles": {
             "get": {
                 "security": [
@@ -1593,6 +1916,142 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationDefinition": {
+            "type": "object",
+            "properties": {
+                "allowed_values": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "application": {
+                    "type": "string"
+                },
+                "application_method": {
+                    "type": "string"
+                },
+                "bootstrap_only": {
+                    "type": "boolean"
+                },
+                "default": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "sensitive": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "validation": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationHistory": {
+            "type": "object",
+            "properties": {
+                "reports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport"
+                    }
+                },
+                "versions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion"
+                    }
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "reported_by": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus"
+                },
+                "version_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus": {
+            "type": "string",
+            "enum": [
+                "not_configured",
+                "requested",
+                "applied",
+                "failed",
+                "rollback"
+            ],
+            "x-enum-varnames": [
+                "ConfigurationStatusNotConfigured",
+                "ConfigurationStatusRequested",
+                "ConfigurationStatusApplied",
+                "ConfigurationStatusFailed",
+                "ConfigurationStatusRollback"
+            ]
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "rollback_of_version_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreateRoleRequest": {
             "type": "object",
             "required": [
@@ -1890,6 +2349,10 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "email_sent": {
+                    "description": "EmailSent reports whether the invitation email was delivered when the\ninvitation was created. It is a transient response field: the delivery\nattempt is not part of the stored invitation state (KEL-36), so it is\nexcluded from persistence and only populated in memory.",
+                    "type": "boolean"
+                },
                 "expires_at": {
                     "type": "string"
                 },
@@ -2081,6 +2544,49 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventory": {
+            "type": "object",
+            "properties": {
+                "configurations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventoryItem"
+                    }
+                },
+                "environment": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventoryItem": {
+            "type": "object",
+            "properties": {
+                "definition": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationDefinition"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "last_known_good_version": {
+                    "type": "integer"
+                },
+                "latest_version": {
+                    "type": "integer"
+                },
+                "latest_version_status": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus"
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -2174,6 +2680,48 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_delivery_http_handler.configurationReportPayload": {
+            "type": "object",
+            "required": [
+                "status",
+                "version_id"
+            ],
+            "properties": {
+                "status": {
+                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus"
+                },
+                "version_id": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "internal_delivery_http_handler.createConfigurationVersionPayload": {
+            "type": "object",
+            "required": [
+                "environment",
+                "expected_version"
+            ],
+            "properties": {
+                "environment": {
+                    "type": "string"
+                },
+                "expected_version": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "rollback_version_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         }

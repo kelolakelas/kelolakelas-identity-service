@@ -74,7 +74,9 @@ func main() {
 	memberRepo := repository.NewMemberRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService)
-	platformHandler := handler.NewPlatformHandler(usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService))
+	platformAuth := usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService)
+	platformHandler := handler.NewPlatformHandler(platformAuth)
+	configurationHandler := handler.NewConfigurationHandler(usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)))
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
 	tenantUsecase := usecase.NewTenantUsecase(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient)
 	invitationUsecase := usecase.NewInvitationUsecase(invitationRepo, tenantRepo, userRepo, rbacRepo, memberRepo, emailService)
@@ -108,12 +110,20 @@ func main() {
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
 		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)
 
-		// Protected routes
+		apiV1.GET("/platform/me", middleware.AuthMiddleware(jwtService), platformHandler.Me)
+
+		// Platform-only routes use a live assignment check as well as the JWT claim.
+		platform := apiV1.Group("/platform")
+		platform.Use(middleware.AuthMiddleware(jwtService), middleware.RequireActivePlatform(platformAuth))
+		platform.GET("/configurations", configurationHandler.Inventory)
+		platform.GET("/configurations/:application/:key/history", configurationHandler.History)
+		platform.POST("/configurations/:application/:key/versions", configurationHandler.CreateVersion)
+		platform.POST("/configurations/reports", configurationHandler.RecordReport)
+
+		// Protected tenant routes reject tenantless platform principals.
 		protected := apiV1.Group("")
-		protected.Use(middleware.AuthMiddleware(jwtService))
+		protected.Use(middleware.AuthMiddleware(jwtService), middleware.RejectTenantlessPlatform())
 		{
-			protected.GET("/platform/me", platformHandler.Me)
-			protected.Use(middleware.RejectTenantlessPlatform())
 			protected.POST("/invitations", invitationHandler.CreateInvitation)
 			protected.GET("/members", memberHandler.ListMembers)
 			protected.GET("/tutors", memberHandler.ListTutors)

@@ -15,6 +15,98 @@ definitions:
       tenant_id:
         type: string
     type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationDefinition:
+    properties:
+      allowed_values:
+        items:
+          type: string
+        type: array
+      application:
+        type: string
+      application_method:
+        type: string
+      bootstrap_only:
+        type: boolean
+      default:
+        type: string
+      description:
+        type: string
+      key:
+        type: string
+      owner:
+        type: string
+      required:
+        type: boolean
+      sensitive:
+        type: boolean
+      type:
+        type: string
+      validation:
+        type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationHistory:
+    properties:
+      reports:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport'
+        type: array
+      versions:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion'
+        type: array
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      reported_by:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus'
+      version_id:
+        type: integer
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus:
+    enum:
+    - not_configured
+    - requested
+    - applied
+    - failed
+    - rollback
+    type: string
+    x-enum-varnames:
+    - ConfigurationStatusNotConfigured
+    - ConfigurationStatusRequested
+    - ConfigurationStatusApplied
+    - ConfigurationStatusFailed
+    - ConfigurationStatusRollback
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion:
+    properties:
+      application:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      environment:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      rollback_of_version_id:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus'
+      value:
+        items:
+          type: integer
+        type: array
+      version:
+        type: integer
+    type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreateRoleRequest:
     properties:
       description:
@@ -213,6 +305,13 @@ definitions:
         type: string
       email:
         type: string
+      email_sent:
+        description: |-
+          EmailSent reports whether the invitation email was delivered when the
+          invitation was created. It is a transient response field: the delivery
+          attempt is not part of the stored invitation state (KEL-36), so it is
+          excluded from persistence and only populated in memory.
+        type: boolean
       expires_at:
         type: string
       id:
@@ -338,6 +437,34 @@ definitions:
       updated_at:
         type: string
     type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventory:
+    properties:
+      configurations:
+        items:
+          $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventoryItem'
+        type: array
+      environment:
+        type: string
+    type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventoryItem:
+    properties:
+      definition:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationDefinition'
+      environment:
+        type: string
+      last_known_good_version:
+        type: integer
+      latest_version:
+        type: integer
+      latest_version_status:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus'
+      status:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus'
+      value:
+        items:
+          type: integer
+        type: array
+    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -403,6 +530,35 @@ definitions:
     - first_name
     - last_name
     - password
+    type: object
+  internal_delivery_http_handler.configurationReportPayload:
+    properties:
+      status:
+        $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationStatus'
+      version_id:
+        minimum: 1
+        type: integer
+    required:
+    - status
+    - version_id
+    type: object
+  internal_delivery_http_handler.createConfigurationVersionPayload:
+    properties:
+      environment:
+        type: string
+      expected_version:
+        minimum: 0
+        type: integer
+      rollback_version_id:
+        minimum: 1
+        type: integer
+      value:
+        items:
+          type: integer
+        type: array
+    required:
+    - environment
+    - expected_version
     type: object
 info:
   contact: {}
@@ -848,6 +1004,207 @@ paths:
       summary: Get all system permissions
       tags:
       - Roles & Permissions
+  /api/v1/platform/configurations:
+    get:
+      description: Lists metadata and current version state for all five applications.
+        Sensitive values are never managed or returned.
+      parameters:
+      - description: Deployment environment
+        in: query
+        name: environment
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_usecase.ConfigurationInventory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Read configuration inventory
+      tags:
+      - Platform Configuration
+  /api/v1/platform/configurations/{application}/{key}/history:
+    get:
+      parameters:
+      - description: Application identifier
+        in: path
+        name: application
+        required: true
+        type: string
+      - description: Configuration key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Deployment environment
+        in: query
+        name: environment
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationHistory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Read configuration version and report history
+      tags:
+      - Platform Configuration
+  /api/v1/platform/configurations/{application}/{key}/versions:
+    post:
+      description: Stores a validated non-secret requested value or creates a new
+        version from a manual rollback target. This endpoint never applies runtime
+        configuration.
+      parameters:
+      - description: Application identifier
+        in: path
+        name: application
+        required: true
+        type: string
+      - description: Configuration key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Configuration version request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_delivery_http_handler.createConfigurationVersionPayload'
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationVersion'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a requested configuration version
+      tags:
+      - Platform Configuration
+  /api/v1/platform/configurations/reports:
+    post:
+      description: Records a platform operator's applied, failed, or rollback acknowledgement.
+        This endpoint does not apply or roll back runtime configuration.
+      parameters:
+      - description: Configuration report
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_delivery_http_handler.configurationReportPayload'
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ConfigurationReport'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Record a configuration application status acknowledgement
+      tags:
+      - Platform Configuration
   /api/v1/roles:
     get:
       consumes:
