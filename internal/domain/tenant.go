@@ -48,7 +48,7 @@ type UpdateTenantLocationRequest struct {
 	Address       string   `json:"address" binding:"required,max=500"`
 	Latitude      *float64 `json:"latitude,omitempty"`
 	Longitude     *float64 `json:"longitude,omitempty"`
-	GooglePlaceID *string  `json:"google_place_id,omitempty,max=255"`
+	GooglePlaceID *string  `json:"google_place_id,omitempty" binding:"omitempty,max=255"`
 }
 
 func (r UpdateTenantLocationRequest) Validate() error {
@@ -67,11 +67,11 @@ func (r UpdateTenantLocationRequest) Validate() error {
 type RegisterTenantRequest struct {
 	Email         string  `json:"email" binding:"required,email"`
 	Password      string  `json:"password" binding:"required,min=6"`
-	FirstName     string  `json:"first_name" binding:"required"`
-	LastName      string  `json:"last_name" binding:"required"`
-	Phone         *string `json:"phone,omitempty"`
-	TenantName    string  `json:"tenant_name" binding:"required"`
-	TenantPhone   *string `json:"tenant_phone,omitempty"`
+	FirstName     string  `json:"first_name" binding:"required,max=255"`
+	LastName      string  `json:"last_name" binding:"required,max=255"`
+	Phone         *string `json:"phone,omitempty" binding:"omitempty,max=50"`
+	TenantName    string  `json:"tenant_name" binding:"required,max=255"`
+	TenantPhone   *string `json:"tenant_phone,omitempty" binding:"omitempty,max=50"`
 	TenantAddress *string `json:"tenant_address,omitempty"`
 }
 
@@ -83,8 +83,8 @@ type RegisterTenantResponse struct {
 }
 
 type UpdateTenantSettingsRequest struct {
-	Name    string           `json:"name" binding:"required"`
-	Phone   *string          `json:"phone,omitempty"`
+	Name    string           `json:"name" binding:"required,max=255"`
+	Phone   *string          `json:"phone,omitempty" binding:"omitempty,max=50"`
 	Address *string          `json:"address,omitempty"`
 	About   *json.RawMessage `json:"about,omitempty"`
 }

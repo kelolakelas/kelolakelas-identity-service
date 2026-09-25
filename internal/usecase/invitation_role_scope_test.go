@@ -29,6 +29,9 @@ func (s *invitationRoleScopeTenantStub) GetByID(_ context.Context, id uuid.UUID)
 	}
 	return s.tenant, nil
 }
+func (s *invitationRoleScopeTenantStub) IsNameExistsExcept(context.Context, string, uuid.UUID) (bool, error) {
+	return false, nil
+}
 func (s *invitationRoleScopeTenantStub) IsNameExists(context.Context, string) (bool, error) {
 	return false, nil
 }
