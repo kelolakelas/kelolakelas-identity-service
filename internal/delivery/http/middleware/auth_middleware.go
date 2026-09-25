@@ -44,11 +44,19 @@ func AuthMiddleware(jwtService *jwt.JWTService) gin.HandlerFunc {
 			return
 		}
 
+		// Pending and legacy platform JWTs are not ordinary principals either.
+		// Reject them before any protected identity handler sees their claims.
+		if claims.PlatformPending || (claims.IsPlatformAdmin && claims.PlatformFactorVersion <= 0) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "Invalid or expired token", "data": nil})
+			return
+		}
+
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
 		c.Set("tenant_id", claims.TenantID)
 		c.Set("role_id", claims.RoleID)
-		c.Set("is_platform_admin", claims.IsPlatformAdmin)
+		c.Set("is_platform_admin", claims.IsPlatformAdmin && claims.PlatformFactorVersion > 0 && !claims.PlatformPending)
+		c.Set("platform_factor_version", claims.PlatformFactorVersion)
 
 		c.Next()
 	}

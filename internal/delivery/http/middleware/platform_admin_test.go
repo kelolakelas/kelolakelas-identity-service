@@ -51,11 +51,24 @@ func (a *activePlatformAssignments) IsActive(context.Context, uuid.UUID) (bool, 
 	return a.active, a.err
 }
 
+type middlewareFactorStore struct{}
+
+func (middlewareFactorStore) Version(context.Context, uuid.UUID) (int64, error) { return 1, nil }
+func (middlewareFactorStore) AssignmentVersion(context.Context, uuid.UUID) (int64, error) {
+	return 1, nil
+}
+func (middlewareFactorStore) Begin(context.Context, uuid.UUID, string, []byte, []byte, time.Time) (int64, error) {
+	panic("unused")
+}
+func (middlewareFactorStore) Consume(context.Context, uuid.UUID, string, []byte, time.Time, func([]byte) (bool, error)) (bool, int64, error) {
+	panic("unused")
+}
+
 func TestRequireActivePlatformEnforcesLiveAssignmentAndPrincipalBoundary(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	id := uuid.New()
 	tokens := jwt.NewJWTService("platform-test-secret", time.Hour)
-	platformToken, err := tokens.GeneratePlatformToken(id, "admin@example.test")
+	platformToken, err := tokens.GenerateVerifiedPlatformToken(id, "admin@example.test", nil, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +98,7 @@ func TestRequireActivePlatformEnforcesLiveAssignmentAndPrincipalBoundary(t *test
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assignments := &activePlatformAssignments{active: test.active, err: test.err}
-			auth := usecase.NewPlatformAuth(activePlatformUsers{id: id}, assignments, tokens)
+			auth := usecase.NewPlatformAuth(activePlatformUsers{id: id}, assignments, tokens).WithFactor(middlewareFactorStore{})
 			handlerCalled := false
 			router := gin.New()
 			router.GET("/api/v1/platform/configurations", AuthMiddleware(tokens), RequireActivePlatform(auth), func(c *gin.Context) {

@@ -12,11 +12,13 @@ import (
 )
 
 var ErrPlatformForbidden = errors.New("platform assignment is inactive")
+var ErrPlatformUnavailable = errors.New("platform factor unavailable")
 
 type PlatformAuth struct {
 	users  domain.UserRepository
 	admins domain.PlatformAdminRepository
 	tokens *jwt.JWTService
+	factor domain.PlatformFactorStore
 }
 
 func NewPlatformAuth(users domain.UserRepository, admins domain.PlatformAdminRepository, tokens *jwt.JWTService) *PlatformAuth {
@@ -46,7 +48,34 @@ func (a *PlatformAuth) Login(ctx context.Context, email, password string) (strin
 			return "", err
 		}
 	}
-	return a.tokens.GeneratePlatformTokenAfter(user.ID, user.Email, validAfter)
+	if a.factor == nil {
+		return "", ErrPlatformUnavailable
+	}
+	// The password stage is never a platform principal. Recovery can only be
+	// authorized by the operator; enrollment itself requires a DB gate.
+	version, err := a.factor.AssignmentVersion(ctx, user.ID)
+	if err != nil {
+		return "", ErrPlatformUnavailable
+	}
+	_ = validAfter
+	return a.tokens.GeneratePendingPlatformToken(user.ID, user.Email, version)
+}
+
+func (a *PlatformAuth) CheckVersion(ctx context.Context, userID uuid.UUID, version int64) error {
+	if version <= 0 || a.factor == nil {
+		return ErrPlatformForbidden
+	}
+	if err := a.Check(ctx, userID); err != nil {
+		return err
+	}
+	current, err := a.factor.Version(ctx, userID)
+	if err != nil {
+		return ErrPlatformUnavailable
+	}
+	if current != version {
+		return ErrPlatformForbidden
+	}
+	return nil
 }
 
 func (a *PlatformAuth) Check(ctx context.Context, userID uuid.UUID) error {
