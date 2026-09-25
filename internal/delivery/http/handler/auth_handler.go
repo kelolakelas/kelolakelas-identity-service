@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,64 @@ type RegisterPayload struct {
 type LoginPayload struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type ResetRequestPayload struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type ResetConfirmPayload struct {
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+// RequestPasswordReset godoc
+// @Summary Request a password reset email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body ResetRequestPayload true "Email"
+// @Success 200 {object} domain.HTTPResponse
+// @Failure 400 {object} domain.ErrorResponse
+// @Router /api/v1/auth/password-reset/request [post]
+func (h *AuthHandler) RequestPasswordReset(c *gin.Context) {
+	var payload ResetRequestPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid email", "data": nil})
+		return
+	}
+	if err := h.authUsecase.RequestPasswordReset(c.Request.Context(), payload.Email); err != nil {
+		slog.ErrorContext(c.Request.Context(), "password reset request failed", "error", err)
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "If the email is registered, a reset link will be sent", "data": nil})
+}
+
+// ConfirmPasswordReset godoc
+// @Summary Confirm a password reset
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body ResetConfirmPayload true "Token and new password"
+// @Success 200 {object} domain.HTTPResponse
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/auth/password-reset/confirm [post]
+func (h *AuthHandler) ConfirmPasswordReset(c *gin.Context) {
+	var payload ResetConfirmPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid reset request", "data": nil})
+		return
+	}
+	if err := h.authUsecase.ConfirmPasswordReset(c.Request.Context(), payload.Token, payload.Password); err != nil {
+		if errors.Is(err, domain.ErrInvalidResetToken) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid or expired reset token", "data": nil})
+			return
+		}
+		slog.ErrorContext(c.Request.Context(), "password reset confirmation failed", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Reset unavailable", "data": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Password updated", "data": nil})
 }
 
 // Register godoc

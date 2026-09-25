@@ -109,6 +109,8 @@ func (s *invitationRoleScopeRbacStub) CountMembersByRole(context.Context, uuid.U
 
 type invitationRoleScopeEmailStub struct{ sent bool }
 
+func (s *invitationRoleScopeEmailStub) SendPasswordResetEmail(string, string) error { return nil }
+
 func (s *invitationRoleScopeEmailStub) SendInvitationEmail(string, string, string) error {
 	s.sent = true
 	return nil

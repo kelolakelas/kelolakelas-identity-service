@@ -44,6 +44,15 @@ func NewResendEmailService(apiKey, fromEmail, appURL string) EmailService {
 	}
 }
 
+func (s *ResendEmailService) SendPasswordResetEmail(toEmail, token string) error {
+	resetURL := s.appURL + "/reset-password?token=" + url.QueryEscape(token)
+	_, err := s.client.Emails.Send(&resend.SendEmailRequest{
+		From: s.fromEmail, To: []string{toEmail}, Subject: "Atur ulang password KelolaKelas",
+		Html: fmt.Sprintf(`<p>Jika Anda meminta reset password, gunakan tautan berikut:</p><p><a href="%s">Atur ulang password</a></p><p>Jika bukan Anda, abaikan email ini.</p>`, resetURL),
+	})
+	return err
+}
+
 func (s *ResendEmailService) SendInvitationEmail(toEmail string, token string, tenantName string) error {
 	inviteURL := fmt.Sprintf("%s/invitations/verify?token=%s", s.appURL, url.QueryEscape(token))
 

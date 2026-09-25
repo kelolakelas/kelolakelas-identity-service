@@ -45,13 +45,21 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Use
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	if err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&user, "LOWER(email) = LOWER(?)", email).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrUserNotFound
 		}
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) SessionValidAfter(ctx context.Context, id uuid.UUID) (*time.Time, error) {
+	var user domain.User
+	if err := r.db.WithContext(ctx).Select("id", "session_valid_after").First(&user, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return user.SessionValidAfter, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {

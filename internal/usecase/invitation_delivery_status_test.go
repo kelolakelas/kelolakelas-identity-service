@@ -16,6 +16,8 @@ type invitationDeliveryEmailStub struct {
 	calls int
 }
 
+func (s *invitationDeliveryEmailStub) SendPasswordResetEmail(string, string) error { return nil }
+
 func (s *invitationDeliveryEmailStub) SendInvitationEmail(string, string, string) error {
 	s.calls++
 	return s.err
