@@ -207,6 +207,9 @@ func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
 	if errors.Is(err, domain.ErrMemberRoleForbidden) {
 		status, message = http.StatusForbidden, "System role cannot be changed"
 	}
+	if errors.Is(err, domain.ErrCreatorGrantForbidden) {
+		status, message = http.StatusForbidden, "Creator role requires platform approval"
+	}
 	if err != nil {
 		c.JSON(status, gin.H{"status": "error", "message": message, "data": nil})
 		return

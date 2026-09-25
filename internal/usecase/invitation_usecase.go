@@ -113,8 +113,13 @@ func (u *invitationUsecase) validateInvitableRole(ctx context.Context, tenantID,
 		}
 		return err
 	}
-	if role == nil || role.TenantID == nil {
-		// System roles are valid for every tenant.
+	if role == nil {
+		return domain.ErrInvitationRoleInvalid
+	}
+	if role.TenantID == nil {
+		if role.Name == "Creator" {
+			return domain.ErrCreatorGrantForbidden
+		}
 		return nil
 	}
 	if *role.TenantID != tenantID {

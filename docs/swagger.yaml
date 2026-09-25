@@ -121,6 +121,27 @@ definitions:
     - name
     - permission_ids
     type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreatorRequest:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      requester_user_id:
+        type: string
+      status:
+        type: string
+      target_email:
+        type: string
+      target_user_id:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse:
     properties:
       data: {}
@@ -560,6 +581,17 @@ definitions:
     - environment
     - expected_version
     type: object
+  internal_delivery_http_handler.createCreatorRequestPayload:
+    properties:
+      reason:
+        type: string
+      target_email:
+        type: string
+      target_user_id:
+        type: string
+    required:
+    - reason
+    type: object
 info:
   contact: {}
   description: Identity & Access Management Service for KelolaKelas Platform
@@ -641,6 +673,86 @@ paths:
       summary: Register new user
       tags:
       - Auth
+  /api/v1/creator-requests:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreatorRequest'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Creator requests for the active tenant
+      tags:
+      - Creator Requests
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Target and reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_delivery_http_handler.createCreatorRequestPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.CreatorRequest'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request an additional tenant Creator
+      tags:
+      - Creator Requests
   /api/v1/invitations:
     post:
       consumes:

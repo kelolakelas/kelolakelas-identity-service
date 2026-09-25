@@ -60,6 +60,9 @@ func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, r
 			}
 			return err
 		}
+		if role.TenantID == nil && role.Name == "Creator" {
+			return domain.ErrCreatorGrantForbidden
+		}
 		var current domain.Role
 		if err := tx.First(&current, "id = ?", member.RoleID).Error; err != nil {
 			return err

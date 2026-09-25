@@ -14,6 +14,7 @@ var (
 	ErrForbiddenRoleAccess         = errors.New("forbidden: role belongs to another tenant")
 	ErrRoleAssignedToActiveMembers = errors.New("cannot delete role because it is currently assigned to active members")
 	ErrPermissionDenied            = errors.New("permission denied")
+	ErrCreatorGrantForbidden       = errors.New("creator role requires platform approval")
 )
 
 type Permission struct {

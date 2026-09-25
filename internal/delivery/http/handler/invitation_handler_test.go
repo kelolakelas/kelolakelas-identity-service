@@ -59,8 +59,13 @@ func decodeCreateInvitationResponse(t *testing.T, recorder *httptest.ResponseRec
 	return payload
 }
 
-// TestCreateInvitationReportsSentEmail keeps the successful message for a
-// delivered invitation (acceptance criterion 2).
+func TestCreateInvitationCreatorGrantReturnsForbidden(t *testing.T) {
+	recorder := performCreateInvitation(&deliveryStatusInvitationUsecase{err: domain.ErrCreatorGrantForbidden})
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", recorder.Code)
+	}
+}
+
 func TestCreateInvitationReportsSentEmail(t *testing.T) {
 	invitation := &domain.TenantInvitation{Email: "member@example.com", EmailSent: true}
 	recorder := performCreateInvitation(&deliveryStatusInvitationUsecase{invitation: invitation})
