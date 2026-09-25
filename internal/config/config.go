@@ -29,6 +29,7 @@ type Config struct {
 	RedisTLS                   bool   `mapstructure:"REDIS_TLS"`
 	RedisDB                    int    `mapstructure:"REDIS_DB"`
 	JWTSecret                  string `mapstructure:"JWT_SECRET"`
+	PlatformFactorKey          string `mapstructure:"PLATFORM_FACTOR_KEY"`
 	Port                       string `mapstructure:"PORT"`
 	AppURL                     string `mapstructure:"APP_URL"`
 	ResendAPIKey               string `mapstructure:"RESEND_API_KEY"`
@@ -63,7 +64,7 @@ func LoadConfig() (Config, error) {
 	viper.AutomaticEnv()
 	for _, key := range []string{
 		"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME",
-		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PORT", "APP_URL",
+		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PLATFORM_FACTOR_KEY", "PORT", "APP_URL",
 		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "PASSWORD_RESET_TTL_MINUTES", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
 		"PERMISSION_REQUIRE_TENANT_ID",
 	} {

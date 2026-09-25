@@ -59,13 +59,14 @@ func TestPlatformLoginAndRevocation(t *testing.T) {
 	user := &domain.User{ID: uuid.New(), Email: "admin@example.test", PasswordHash: hashed}
 	assignment := &platformAssignment{active: true}
 	tokens := jwt.NewJWTService("test-secret", time.Hour)
-	auth := NewPlatformAuth(platformUsers{user}, assignment, tokens)
+	store := &factorMemory{id: user.ID, version: 1, enrolled: true}
+	auth := NewPlatformAuth(platformUsers{user}, assignment, tokens).WithFactor(store)
 	token, err := auth.Login(context.Background(), user.Email, "valid-password")
 	if err != nil {
 		t.Fatal(err)
 	}
 	claims, err := tokens.ValidateToken(token)
-	if err != nil || !claims.IsPlatformAdmin || claims.TenantID != uuid.Nil || claims.RoleID != uuid.Nil || claims.IsParent {
+	if err != nil || !claims.PlatformPending || claims.IsPlatformAdmin || claims.TenantID != uuid.Nil || claims.RoleID != uuid.Nil || claims.IsParent {
 		t.Fatalf("invalid platform principal: %+v %v", claims, err)
 	}
 	if err := auth.Check(context.Background(), claims.UserID); err != nil {

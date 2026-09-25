@@ -28,6 +28,7 @@ func TestGrantIdempotentAndRecovery(t *testing.T) {
 		mock.ExpectBegin()
 		mock.ExpectQuery("SELECT count").WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 		mock.ExpectExec("INSERT INTO platform_admin_assignments").WithArgs(id).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("DELETE FROM platform_factor_challenges").WithArgs(id).WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 		if err := grant(context.Background(), db, id); err != nil {
 			t.Fatalf("grant %d: %v", i, err)

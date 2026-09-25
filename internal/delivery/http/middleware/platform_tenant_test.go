@@ -15,7 +15,7 @@ func TestPlatformTokenCannotReachTenantRoute(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	tokens := jwt.NewJWTService("test-secret", time.Hour)
 	id := uuid.New()
-	platform, _ := tokens.GeneratePlatformToken(id, "admin@example.test")
+	platform, _ := tokens.GenerateVerifiedPlatformToken(id, "admin@example.test", nil, 1)
 	tenant, _ := tokens.GenerateToken(id, "admin@example.test", uuid.New(), uuid.New(), uuid.New(), false)
 	router := gin.New()
 	router.Use(AuthMiddleware(tokens), RejectTenantlessPlatform())

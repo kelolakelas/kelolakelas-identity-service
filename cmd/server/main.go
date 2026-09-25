@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"log/slog"
 	"net"
 	"os"
@@ -75,7 +76,12 @@ func main() {
 
 	resetStore := repository.NewPasswordResetRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService).WithPasswordReset(resetStore, emailService, time.Duration(cfg.PasswordResetTTLMinutes)*time.Minute)
-	platformAuth := usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService)
+	factorKey, err := hex.DecodeString(cfg.PlatformFactorKey)
+	if err != nil || len(factorKey) != 32 {
+		slog.Error("PLATFORM_FACTOR_KEY must be 32 bytes hex")
+		os.Exit(1)
+	}
+	platformAuth := usecase.NewPlatformAuth(userRepo, repository.NewPlatformAdminRepository(db), jwtService).WithFactor(repository.NewPlatformFactorStore(db, factorKey))
 	platformHandler := handler.NewPlatformHandler(platformAuth)
 	configurationHandler := handler.NewConfigurationHandler(
 		usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)),
@@ -114,8 +120,10 @@ func main() {
 		apiV1.POST("/auth/login", authHandler.Login)
 		apiV1.POST("/auth/password-reset/request", authHandler.RequestPasswordReset)
 		apiV1.POST("/auth/password-reset/confirm", authHandler.ConfirmPasswordReset)
-		apiV1.GET("/internal/session/check", handler.SessionCheck(jwtService, resetStore))
+		apiV1.GET("/internal/session/check", handler.SessionCheck(jwtService, resetStore, platformAuth))
 		apiV1.POST("/platform/auth/login", platformHandler.Login)
+		apiV1.POST("/platform/auth/challenge", platformHandler.StartFactor)
+		apiV1.POST("/platform/auth/verify", platformHandler.FinishFactor)
 		apiV1.POST("/tenants/register", authHandler.RegisterTenant)
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
 		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)

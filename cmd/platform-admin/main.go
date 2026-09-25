@@ -23,9 +23,14 @@ func grant(ctx context.Context, db *gorm.DB, userID uuid.UUID) error {
 		if count != 1 {
 			return gorm.ErrRecordNotFound
 		}
-		return tx.Exec(`INSERT INTO platform_admin_assignments (user_id, is_active)
-            VALUES (?, true) ON CONFLICT (user_id) DO UPDATE
-            SET is_active = true, updated_at = now()`, userID).Error
+		// Explicit operator invocation revokes old factor and every platform session.
+		if err := tx.Exec(`INSERT INTO platform_admin_assignments (user_id, is_active, enrollment_allowed, factor_version)
+            VALUES (?, true, true, 1) ON CONFLICT (user_id) DO UPDATE
+            SET is_active = true, factor_secret = NULL, enrollment_allowed = true,
+                factor_version = platform_admin_assignments.factor_version + 1, updated_at = now()`, userID).Error; err != nil {
+			return err
+		}
+		return tx.Exec(`DELETE FROM platform_factor_challenges WHERE user_id = ?`, userID).Error
 	})
 }
 

@@ -14,13 +14,16 @@ var (
 )
 
 type Claims struct {
-	UserID          uuid.UUID `json:"user_id"`
-	Email           string    `json:"email"`
-	TenantID        uuid.UUID `json:"tenant_id,omitempty"`
-	RoleID          uuid.UUID `json:"role_id,omitempty"`
-	MemberID        uuid.UUID `json:"member_id,omitempty"`
-	IsParent        bool      `json:"is_parent,omitempty"`
-	IsPlatformAdmin bool      `json:"is_platform_admin,omitempty"`
+	UserID                 uuid.UUID `json:"user_id"`
+	Email                  string    `json:"email"`
+	TenantID               uuid.UUID `json:"tenant_id,omitempty"`
+	RoleID                 uuid.UUID `json:"role_id,omitempty"`
+	MemberID               uuid.UUID `json:"member_id,omitempty"`
+	IsParent               bool      `json:"is_parent,omitempty"`
+	IsPlatformAdmin        bool      `json:"is_platform_admin,omitempty"`
+	PlatformFactorVersion  int64     `json:"platform_factor_version,omitempty"`
+	PlatformPending        bool      `json:"platform_pending,omitempty"`
+	PlatformPendingVersion int64     `json:"platform_pending_version,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -68,12 +71,20 @@ func (s *JWTService) GeneratePlatformToken(userID uuid.UUID, email string) (stri
 }
 
 func (s *JWTService) GeneratePlatformTokenAfter(userID uuid.UUID, email string, validAfter *time.Time) (string, error) {
+	return s.GenerateVerifiedPlatformToken(userID, email, validAfter, 0)
+}
+
+func (s *JWTService) GeneratePendingPlatformToken(userID uuid.UUID, email string, version int64) (string, error) {
+	return s.sign(Claims{UserID: userID, Email: email, PlatformPending: true, PlatformPendingVersion: version, RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)), IssuedAt: jwt.NewNumericDate(time.Now())}})
+}
+
+func (s *JWTService) GenerateVerifiedPlatformToken(userID uuid.UUID, email string, validAfter *time.Time, version int64) (string, error) {
 	issued := time.Now()
 	if validAfter != nil && issued.Before(*validAfter) {
 		issued = *validAfter
 	}
 	return s.sign(Claims{
-		UserID: userID, Email: email, IsPlatformAdmin: true,
+		UserID: userID, Email: email, IsPlatformAdmin: true, PlatformFactorVersion: version,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(issued.Add(s.tokenDuration)),
 			IssuedAt:  jwt.NewNumericDate(issued),
