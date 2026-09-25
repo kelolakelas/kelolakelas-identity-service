@@ -144,11 +144,8 @@ func TestVersionedRegistrationPolicyCloseAndOpenAppendVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("close: %v", err)
 	}
-	if closed.Open {
-		t.Fatalf("close reported open=true: %+v", closed)
-	}
-	if closed.DesiredVersion != 2 {
-		t.Fatalf("desired=%d want 2", closed.DesiredVersion)
+	if !closed.Open || closed.AppliedVersion != 1 || closed.DesiredVersion != 2 {
+		t.Fatalf("pending close should report effective open at applied=1, desired=2: %+v", closed)
 	}
 	// A requested close must not take effect until it is acknowledged applied.
 	evaluated, err := policy.Evaluate(context.Background())
@@ -185,8 +182,28 @@ func TestVersionedRegistrationPolicyCloseAndOpenAppendVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	if !opened.Open || opened.DesiredVersion != 3 {
-		t.Fatalf("open=%+v want desired 3", opened)
+	if opened.Open || opened.AppliedVersion != 2 || opened.DesiredVersion != 3 {
+		t.Fatalf("pending open should report effective closed at applied=2, desired=3: %+v", opened)
+	}
+	evaluated, err = policy.Evaluate(context.Background())
+	if err != nil || evaluated.Open || evaluated.AppliedVersion != 2 || evaluated.DesiredVersion != 3 {
+		t.Fatalf("unacknowledged open changed effective policy: %+v %v", evaluated, err)
+	}
+	versionID = 0
+	for _, version := range repository.versions {
+		if version.Version == opened.DesiredVersion {
+			versionID = version.ID
+		}
+	}
+	if versionID == 0 {
+		t.Fatalf("open version %d missing from repository", opened.DesiredVersion)
+	}
+	if _, err := repository.RecordConfigurationReport(context.Background(), domain.ConfigurationReportRequest{VersionID: versionID, Status: domain.ConfigurationStatusApplied, ReportedBy: operator}); err != nil {
+		t.Fatalf("acknowledge open: %v", err)
+	}
+	evaluated, err = policy.Evaluate(context.Background())
+	if err != nil || !evaluated.Open || evaluated.AppliedVersion != 3 || evaluated.DesiredVersion != 3 {
+		t.Fatalf("acknowledged open did not restore registration: %+v %v", evaluated, err)
 	}
 }
 

@@ -65,10 +65,9 @@ func (p *versionedRegistrationPolicy) Open(ctx context.Context, operator uuid.UU
 	return p.createVersion(ctx, operator, true)
 }
 
-// createVersion appends the desired version. It returns only the desired
-// version, with applied_version zero: the version is requested, not applied,
-// and the platform operator acknowledges the application through the regular
-// control-plane report endpoint, exactly as for every other configuration.
+// createVersion appends a desired version, then reads the effective policy.
+// The new version does not become effective until an applied report is recorded
+// through the regular control-plane report endpoint.
 func (p *versionedRegistrationPolicy) createVersion(ctx context.Context, operator uuid.UUID, open bool) (domain.RegistrationPolicyEvaluated, error) {
 	states, err := p.repository.ListConfigurationState(ctx, domain.TenantRegistrationEnvironment)
 	if err != nil {
@@ -83,7 +82,7 @@ func (p *versionedRegistrationPolicy) createVersion(ctx context.Context, operato
 	if open {
 		value = json.RawMessage("true")
 	}
-	created, err := p.repository.CreateConfigurationVersion(ctx, domain.ConfigurationVersionRequest{
+	_, err = p.repository.CreateConfigurationVersion(ctx, domain.ConfigurationVersionRequest{
 		Application:     domain.TenantOnboardingApplication,
 		Environment:     domain.TenantRegistrationEnvironment,
 		Key:             domain.TenantRegistrationOpenKey,
@@ -94,15 +93,8 @@ func (p *versionedRegistrationPolicy) createVersion(ctx context.Context, operato
 	if err != nil {
 		return domain.RegistrationPolicyEvaluated{}, err
 	}
-	// The version just written is by definition the newest desired version.
-	// Re-reading the store is unnecessary; only a concurrent write could have
-	// advanced it, and the optimistic head advance above would have failed
-	// that write with ErrConfigurationVersionConflict instead.
-	return domain.RegistrationPolicyEvaluated{
-		Application:    domain.TenantOnboardingApplication,
-		Key:            domain.TenantRegistrationOpenKey,
-		Environment:    domain.TenantRegistrationEnvironment,
-		Open:           open,
-		DesiredVersion: created.Version,
-	}, nil
+	// Evaluate through the same path as GET and registration. A report (or a
+	// concurrent policy mutation) can arrive after creation, so the response
+	// must describe the effective state at read time rather than the request.
+	return p.Evaluate(ctx)
 }

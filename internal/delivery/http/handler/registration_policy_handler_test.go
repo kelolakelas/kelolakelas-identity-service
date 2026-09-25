@@ -36,7 +36,7 @@ func (s *registrationPolicyHandlerStub) Close(_ context.Context, operator uuid.U
 	if s.closeErr != nil {
 		return domain.RegistrationPolicyEvaluated{}, s.closeErr
 	}
-	return domain.RegistrationPolicyEvaluated{DesiredVersion: 2}, nil
+	return domain.RegistrationPolicyEvaluated{Open: true, AppliedVersion: 1, DesiredVersion: 2}, nil
 }
 func (s *registrationPolicyHandlerStub) Open(_ context.Context, operator uuid.UUID) (domain.RegistrationPolicyEvaluated, error) {
 	s.openCalls++
@@ -44,7 +44,7 @@ func (s *registrationPolicyHandlerStub) Open(_ context.Context, operator uuid.UU
 	if s.openErr != nil {
 		return domain.RegistrationPolicyEvaluated{}, s.openErr
 	}
-	return domain.RegistrationPolicyEvaluated{Open: true, DesiredVersion: 3}, nil
+	return domain.RegistrationPolicyEvaluated{Open: false, AppliedVersion: 2, DesiredVersion: 3}, nil
 }
 
 func registrationPolicyRouter(policy domain.RegistrationPolicy) *gin.Engine {
@@ -82,6 +82,11 @@ func TestRegistrationPolicyEndpointsReadAndMutate(t *testing.T) {
 	if stub.closeCalls != 1 {
 		t.Fatalf("close calls=%d", stub.closeCalls)
 	}
+	for _, field := range []string{`"open":true`, `"applied_version":1`, `"desired_version":2`} {
+		if !strings.Contains(response.Body.String(), field) {
+			t.Fatalf("pending close response missing %s: %s", field, response.Body.String())
+		}
+	}
 
 	response = httptest.NewRecorder()
 	router.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/platform/registration-policy/open", nil))
@@ -90,6 +95,11 @@ func TestRegistrationPolicyEndpointsReadAndMutate(t *testing.T) {
 	}
 	if stub.openCalls != 1 {
 		t.Fatalf("open calls=%d", stub.openCalls)
+	}
+	for _, field := range []string{`"open":false`, `"applied_version":2`, `"desired_version":3`} {
+		if !strings.Contains(response.Body.String(), field) {
+			t.Fatalf("pending open response missing %s: %s", field, response.Body.String())
+		}
 	}
 	if stub.lastOperator == uuid.Nil {
 		t.Fatal("mutation did not receive the platform operator identity")
