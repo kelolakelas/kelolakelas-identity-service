@@ -29,6 +29,8 @@ type TenantMemberUsecase interface {
 type InvitationUsecase interface {
 	CreateInvitation(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID, email string) (*domain.TenantInvitation, error)
 	VerifyInvitation(ctx context.Context, token string) (*domain.TenantInvitation, error)
+	ListInvitations(ctx context.Context, tenantID, callerRoleID uuid.UUID) ([]domain.TenantInvitation, error)
+	RevokeInvitation(ctx context.Context, tenantID, callerRoleID, invitationID uuid.UUID) error
 }
 
 type RoleUsecase interface {

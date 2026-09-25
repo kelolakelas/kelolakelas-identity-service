@@ -25,6 +25,12 @@ func (u *permissionDeniedInvitationUsecase) CreateInvitation(_ context.Context, 
 func (*permissionDeniedInvitationUsecase) VerifyInvitation(context.Context, string) (*domain.TenantInvitation, error) {
 	return nil, nil
 }
+func (*permissionDeniedInvitationUsecase) ListInvitations(context.Context, uuid.UUID, uuid.UUID) ([]domain.TenantInvitation, error) {
+	return nil, domain.ErrPermissionDenied
+}
+func (*permissionDeniedInvitationUsecase) RevokeInvitation(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error {
+	return domain.ErrPermissionDenied
+}
 
 type permissionDeniedRoleUsecase struct {
 	callerRoleIDs []uuid.UUID
@@ -162,6 +168,12 @@ func (*invalidInvitableRoleInvitationUsecase) CreateInvitation(context.Context, 
 
 func (*invalidInvitableRoleInvitationUsecase) VerifyInvitation(context.Context, string) (*domain.TenantInvitation, error) {
 	return nil, nil
+}
+func (*invalidInvitableRoleInvitationUsecase) ListInvitations(context.Context, uuid.UUID, uuid.UUID) ([]domain.TenantInvitation, error) {
+	return nil, nil
+}
+func (*invalidInvitableRoleInvitationUsecase) RevokeInvitation(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error {
+	return nil
 }
 
 // TestCreateInvitationWithForeignRoleReturnsBadRequest covers the delivery-level part of

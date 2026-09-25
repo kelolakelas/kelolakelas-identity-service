@@ -133,6 +133,8 @@ func main() {
 		protected.Use(middleware.AuthMiddleware(jwtService), middleware.RejectTenantlessPlatform())
 		{
 			protected.POST("/invitations", invitationHandler.CreateInvitation)
+			protected.GET("/invitations", invitationHandler.ListInvitations)
+			protected.DELETE("/invitations/:id", invitationHandler.RevokeInvitation)
 			protected.POST("/creator-requests", creatorRequestHandler.Create)
 			protected.GET("/creator-requests", creatorRequestHandler.List)
 			protected.GET("/members", memberHandler.ListMembers)

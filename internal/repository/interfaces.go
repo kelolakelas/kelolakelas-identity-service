@@ -42,6 +42,9 @@ type InvitationRepository interface {
 	GetByToken(ctx context.Context, token string) (*domain.TenantInvitation, error)
 	GetByTenantAndEmail(ctx context.Context, tenantID uuid.UUID, email string) (*domain.TenantInvitation, error)
 	Update(ctx context.Context, invitation *domain.TenantInvitation) error
+	ReplaceActive(ctx context.Context, invitation *domain.TenantInvitation) error
+	ListPending(ctx context.Context, tenantID uuid.UUID) ([]domain.TenantInvitation, error)
+	Revoke(ctx context.Context, tenantID, invitationID uuid.UUID) error
 }
 
 type RbacRepository interface {

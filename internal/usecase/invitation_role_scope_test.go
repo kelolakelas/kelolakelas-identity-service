@@ -42,7 +42,7 @@ func (s *invitationRoleScopeUserStub) GetByID(context.Context, uuid.UUID) (*doma
 	return nil, errors.New("not found")
 }
 func (s *invitationRoleScopeUserStub) GetByEmail(context.Context, string) (*domain.User, error) {
-	return nil, errors.New("not found")
+	return nil, domain.ErrUserNotFound
 }
 func (s *invitationRoleScopeUserStub) Update(context.Context, *domain.User) error { return nil }
 func (s *invitationRoleScopeUserStub) Delete(context.Context, uuid.UUID) error    { return nil }
@@ -74,6 +74,15 @@ func (s *invitationRoleScopeInvitationStub) GetByTenantAndEmail(context.Context,
 }
 func (s *invitationRoleScopeInvitationStub) Update(context.Context, *domain.TenantInvitation) error {
 	return nil
+}
+func (s *invitationRoleScopeInvitationStub) ReplaceActive(ctx context.Context, invitation *domain.TenantInvitation) error {
+	return s.Create(ctx, invitation)
+}
+func (s *invitationRoleScopeInvitationStub) ListPending(context.Context, uuid.UUID) ([]domain.TenantInvitation, error) {
+	return nil, nil
+}
+func (s *invitationRoleScopeInvitationStub) Revoke(context.Context, uuid.UUID, uuid.UUID) error {
+	return domain.ErrInvitationNotFound
 }
 
 type invitationRoleScopeRbacStub struct {

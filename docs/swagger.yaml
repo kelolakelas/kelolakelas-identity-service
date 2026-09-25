@@ -512,6 +512,21 @@ definitions:
     - email
     - role_id
     type: object
+  internal_delivery_http_handler.InvitationResponse:
+    properties:
+      email:
+        type: string
+      email_sent:
+        type: boolean
+      expires_at:
+        type: string
+      id:
+        type: string
+      role_id:
+        type: string
+      status:
+        type: string
+    type: object
   internal_delivery_http_handler.LoginPayload:
     properties:
       email:
@@ -841,6 +856,34 @@ paths:
       tags:
       - Creator Requests
   /api/v1/invitations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_delivery_http_handler.InvitationResponse'
+                  type: array
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List unredeemed tenant invitations
+      tags:
+      - Invitations
     post:
       consumes:
       - application/json
@@ -864,7 +907,7 @@ paths:
             - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.TenantInvitation'
+                  $ref: '#/definitions/internal_delivery_http_handler.InvitationResponse'
               type: object
         "400":
           description: Bad Request
@@ -889,6 +932,40 @@ paths:
       security:
       - BearerAuth: []
       summary: Create tenant invitation
+      tags:
+      - Invitations
+  /api/v1/invitations/{id}:
+    delete:
+      parameters:
+      - description: Invitation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke an unredeemed tenant invitation
       tags:
       - Invitations
   /api/v1/invitations/register:
