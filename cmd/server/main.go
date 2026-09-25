@@ -87,6 +87,7 @@ func main() {
 	invitationHandler := handler.NewInvitationHandler(invitationUsecase, authUsecase)
 	roleHandler := handler.NewRoleHandler(roleUsecase)
 	memberHandler := handler.NewMemberHandler(memberUsecase)
+	creatorRequestHandler := handler.NewCreatorRequestHandler(usecase.NewCreatorRequestUsecase(repository.NewCreatorRequestRepository(db)))
 	tenantHandler := handler.NewTenantHandler(tenantUsecase)
 
 	// Gin Router
@@ -125,6 +126,8 @@ func main() {
 		protected.Use(middleware.AuthMiddleware(jwtService), middleware.RejectTenantlessPlatform())
 		{
 			protected.POST("/invitations", invitationHandler.CreateInvitation)
+			protected.POST("/creator-requests", creatorRequestHandler.Create)
+			protected.GET("/creator-requests", creatorRequestHandler.List)
 			protected.GET("/members", memberHandler.ListMembers)
 			protected.GET("/tutors", memberHandler.ListTutors)
 			protected.GET("/members/:id", memberHandler.GetMember)

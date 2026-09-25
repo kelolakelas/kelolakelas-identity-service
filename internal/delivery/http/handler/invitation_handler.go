@@ -94,6 +94,10 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 	invitation, err := h.invitationUsecase.CreateInvitation(c.Request.Context(), tenantID, extractCallerRoleID(c), payload.RoleID, payload.Email)
 	if err != nil {
+		if errors.Is(err, domain.ErrCreatorGrantForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Creator role requires platform approval", "data": nil})
+			return
+		}
 		if errors.Is(err, domain.ErrPermissionDenied) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"status":  "error",
@@ -223,6 +227,10 @@ func (h *InvitationHandler) RegisterInvitedUser(c *gin.Context) {
 
 	user, err := h.authUsecase.RegisterInvitedUser(c.Request.Context(), payload.Token, payload.FirstName, payload.LastName, payload.Password)
 	if err != nil {
+		if errors.Is(err, domain.ErrCreatorGrantForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Creator role requires platform approval", "data": nil})
+			return
+		}
 		if errors.Is(err, domain.ErrInvitationNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",

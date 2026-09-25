@@ -196,6 +196,16 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 			return domain.ErrInvitationExpired
 		}
 
+		// Legacy invitations may predate the Creator grant guard. Never redeem one
+		// into a privileged membership, even when its token remains valid.
+		var invitedRole domain.Role
+		if err := tx.First(&invitedRole, "id = ?", invitation.RoleID).Error; err != nil {
+			return err
+		}
+		if invitedRole.TenantID == nil && invitedRole.Name == "Creator" {
+			return domain.ErrCreatorGrantForbidden
+		}
+
 		// Check if user with invitation email already exists
 		var existingUser domain.User
 		if err := tx.Where("email = ?", invitation.Email).First(&existingUser).Error; err == nil {
