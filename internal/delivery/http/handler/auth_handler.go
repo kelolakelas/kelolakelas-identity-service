@@ -264,9 +264,13 @@ func (h *AuthHandler) RegisterTenant(c *gin.Context) {
 			})
 			return
 		}
+		// KEL-61: the raw usecase error may carry internal details (driver
+		// messages, constraint names), so it is logged server-side and the
+		// client only ever sees a fixed generic message.
+		slog.ErrorContext(c.Request.Context(), "tenant registration failed", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Failed to register tenant and user: " + err.Error(),
+			"message": "Failed to register tenant and user",
 			"data":    nil,
 		})
 		return
