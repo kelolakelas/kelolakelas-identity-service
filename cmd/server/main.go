@@ -111,7 +111,7 @@ func main() {
 
 	// Gin Router
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLog(), gin.Recovery())
 
 	// Health check endpoint
 	r.GET("/health", healthHandler("identity-service"))
@@ -192,7 +192,7 @@ func main() {
 			return
 		}
 
-		grpcServer := grpc.NewServer()
+		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(idgrpc.RequestLog))
 		// ADR 0002 transition window: while PERMISSION_REQUIRE_TENANT_ID is unset,
 		// CheckPermission still answers academic deployments that have not been upgraded
 		// yet and do not send tenant_id.
