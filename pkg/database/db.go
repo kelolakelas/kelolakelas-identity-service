@@ -54,7 +54,8 @@ func NewRedisClient(host, port, username, password string, tlsEnabled bool, db i
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to ping redis: %w", err)
+		// Retain the client for readiness probes even if Redis is initially down.
+		return rdb, fmt.Errorf("failed to ping redis: %w", err)
 	}
 
 	return rdb, nil
