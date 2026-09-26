@@ -237,6 +237,35 @@ definitions:
       name:
         type: string
     type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PlatformCreatorRequest:
+    properties:
+      created_at:
+        type: string
+      decided_at:
+        type: string
+      decided_by:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      rejection_reason:
+        type: string
+      requester_user_id:
+        type: string
+      status:
+        type: string
+      target_email:
+        type: string
+      target_user_id:
+        type: string
+      tenant_id:
+        type: string
+      tenant_name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated:
     properties:
       application:
@@ -1628,6 +1657,43 @@ paths:
       summary: Record a configuration application status acknowledgement
       tags:
       - Platform Configuration
+  /api/v1/platform/creator-requests:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PlatformCreatorRequest'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List pending Creator requests across tenants for active platform admins
+      tags:
+      - Creator Requests
   /api/v1/platform/creator-requests/{id}/approve:
     post:
       parameters:
