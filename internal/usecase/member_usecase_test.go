@@ -18,6 +18,7 @@ type memberRepositoryStub struct {
 	allowed          bool
 	deleted          bool
 	permissionTenant uuid.UUID
+	permissionQuery  domain.MemberPermissionQuery
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -38,8 +39,9 @@ func (s *memberRepositoryStub) Delete(context.Context, uuid.UUID, uuid.UUID) err
 	return s.err
 }
 
-func (s *memberRepositoryStub) HasPermission(_ context.Context, tenantID, _ uuid.UUID, _ string) (bool, error) {
-	s.permissionTenant = tenantID
+func (s *memberRepositoryStub) HasActiveMemberPermission(_ context.Context, query domain.MemberPermissionQuery) (bool, error) {
+	s.permissionTenant = query.TenantID
+	s.permissionQuery = query
 	return s.allowed, s.err
 }
 
@@ -63,7 +65,8 @@ func TestMemberUsecaseDelete(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			stub := &memberRepositoryStub{allowed: test.allowed, err: test.err}
 			tenantID := uuid.New()
-			err := NewMemberUsecase(stub).Delete(context.Background(), tenantID, uuid.New(), uuid.New())
+			callerRoleID := uuid.New()
+			err := NewMemberUsecase(stub).Delete(callerContext(), tenantID, callerRoleID, uuid.New())
 			if test.expectErr != nil {
 				if err == nil || err.Error() != test.expectErr.Error() {
 					t.Fatalf("error = %v, want %v", err, test.expectErr)
@@ -77,7 +80,34 @@ func TestMemberUsecaseDelete(t *testing.T) {
 			if stub.permissionTenant != tenantID {
 				t.Fatalf("permission tenant = %s, want %s", stub.permissionTenant, tenantID)
 			}
+			want := domain.MemberPermissionQuery{TenantID: tenantID, RoleID: callerRoleID, MemberID: testCaller.MemberID, UserID: testCaller.UserID, Permission: "member:delete"}
+			if stub.permissionQuery != want {
+				t.Fatalf("permission query = %+v, want %+v", stub.permissionQuery, want)
+			}
 		})
+	}
+}
+
+// TestMemberUsecaseUpdateRoleRequiresCallerMembership proves member:update goes through the
+// same KEL-76 membership rule as every other administrative check.
+func TestMemberUsecaseUpdateRoleRequiresCallerMembership(t *testing.T) {
+	tenantID, callerRoleID := uuid.New(), uuid.New()
+
+	denied := &memberRepositoryStub{}
+	if _, err := NewMemberUsecase(denied).UpdateRole(callerContext(), tenantID, callerRoleID, uuid.New(), uuid.New()); !errors.Is(err, domain.ErrMemberPermission) {
+		t.Fatalf("error = %v, want ErrMemberPermission", err)
+	}
+	want := domain.MemberPermissionQuery{TenantID: tenantID, RoleID: callerRoleID, MemberID: testCaller.MemberID, UserID: testCaller.UserID, Permission: "member:update"}
+	if denied.permissionQuery != want {
+		t.Fatalf("permission query = %+v, want %+v", denied.permissionQuery, want)
+	}
+
+	noCaller := &memberRepositoryStub{allowed: true}
+	if _, err := NewMemberUsecase(noCaller).UpdateRole(context.Background(), tenantID, callerRoleID, uuid.New(), uuid.New()); !errors.Is(err, domain.ErrMemberPermission) {
+		t.Fatalf("error without caller = %v, want ErrMemberPermission", err)
+	}
+	if noCaller.permissionQuery != (domain.MemberPermissionQuery{}) {
+		t.Fatalf("lookup made without a caller: %+v", noCaller.permissionQuery)
 	}
 }
 

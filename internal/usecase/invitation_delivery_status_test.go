@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -39,7 +38,7 @@ func TestCreateInvitationMarksEmailSentOnDeliverySuccess(t *testing.T) {
 		emailService,
 	)
 
-	invitation, err := usecase.CreateInvitation(context.Background(), tenantID, uuid.New(), uuid.New(), "member@example.com")
+	invitation, err := usecase.CreateInvitation(callerContext(), tenantID, uuid.New(), uuid.New(), "member@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -71,7 +70,7 @@ func TestCreateInvitationKeepsInvitationWhenDeliveryFails(t *testing.T) {
 		emailService,
 	)
 
-	invitation, err := usecase.CreateInvitation(context.Background(), tenantID, uuid.New(), uuid.New(), "member@example.com")
+	invitation, err := usecase.CreateInvitation(callerContext(), tenantID, uuid.New(), uuid.New(), "member@example.com")
 	if err != nil {
 		t.Fatalf("invitation creation failed on delivery error: %v", err)
 	}

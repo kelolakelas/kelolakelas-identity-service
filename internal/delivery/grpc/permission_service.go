@@ -9,6 +9,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/repository"
 )
 
 const (
@@ -77,6 +80,11 @@ func permissionServiceCheckPermissionHandler(
 // with the legacy global lookup so an academic deployment that has not been upgraded yet
 // keeps working. Once every caller sends "tenant_id", set RequirePermissionTenantID to
 // true to reject those requests instead.
+//
+// KEL-76 adds the optional "member_id" field. When it is present the request must also carry
+// tenant_id, and "allowed" is true only for an active, not soft-deleted membership with that id
+// in that tenant that currently carries role_id. Requests without member_id are answered exactly
+// as before so academic and billing deployments that do not send it yet keep working.
 func (s *TenantServiceServer) CheckPermission(ctx context.Context, req *structpb.Struct) (*structpb.Struct, error) {
 	roleID, err := structString(req, "role_id")
 	if err != nil {
@@ -90,8 +98,17 @@ func (s *TenantServiceServer) CheckPermission(ctx context.Context, req *structpb
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "role_id must be a UUID")
 	}
+	memberID, err := optionalMemberID(req)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	tenantValue, tenantErr := structString(req, "tenant_id")
+	if tenantErr != nil && memberID != nil {
+		// A membership is only meaningful inside a tenant. Never answer a member_id request
+		// through the unscoped legacy lookup, which would ignore the membership entirely.
+		return nil, status.Error(codes.InvalidArgument, "tenant_id is required when member_id is set")
+	}
 	if tenantErr != nil {
 		if RequirePermissionTenantID {
 			return nil, status.Error(codes.InvalidArgument, "tenant_id is required")
@@ -108,6 +125,21 @@ func (s *TenantServiceServer) CheckPermission(ctx context.Context, req *structpb
 	parsedTenantID, err := uuid.Parse(tenantValue)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "tenant_id must be a UUID")
+	}
+
+	if memberID != nil {
+		// KEL-76: a caller that names the membership its token was minted for is only
+		// allowed while that membership is active in this tenant and still carries the role.
+		allowed, err := repository.ActiveMemberHasPermission(ctx, s.db, domain.MemberPermissionQuery{
+			TenantID:   parsedTenantID,
+			RoleID:     parsedRoleID,
+			MemberID:   *memberID,
+			Permission: permission,
+		})
+		if err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("check permission: %v", err))
+		}
+		return structpb.NewStruct(map[string]interface{}{"allowed": allowed})
 	}
 
 	allowed, err := s.checkPermission(ctx, &parsedTenantID, parsedRoleID, permission)
@@ -136,6 +168,31 @@ func (s *TenantServiceServer) checkPermission(ctx context.Context, tenantID *uui
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// optionalMemberID reads the optional "member_id" field (KEL-76). An absent field or an empty
+// string means the caller did not name a membership, which keeps the pre-KEL-76 behaviour for
+// academic and billing deployments that do not send it yet; omitting the field grants nothing
+// that sending it would not. A present value must be a UUID string.
+func optionalMemberID(req *structpb.Struct) (*uuid.UUID, error) {
+	value, ok := req.GetFields()["member_id"]
+	if !ok || value == nil {
+		return nil, nil
+	}
+	if _, isNull := value.GetKind().(*structpb.Value_NullValue); isNull {
+		return nil, nil
+	}
+	if _, isString := value.GetKind().(*structpb.Value_StringValue); !isString {
+		return nil, fmt.Errorf("member_id must be a UUID")
+	}
+	if value.GetStringValue() == "" {
+		return nil, nil
+	}
+	parsed, err := uuid.Parse(value.GetStringValue())
+	if err != nil || parsed == uuid.Nil {
+		return nil, fmt.Errorf("member_id must be a UUID")
+	}
+	return &parsed, nil
 }
 
 func structString(req *structpb.Struct, key string) (string, error) {

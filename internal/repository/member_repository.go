@@ -78,20 +78,13 @@ func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, r
 	return r.GetByID(ctx, tenantID, memberID)
 }
 
-// HasPermission answers whether roleID grants permission while operating on tenantID.
-// The role must belong to that tenant or be a system role (tenant_id IS NULL), so a role
-// from another tenant never satisfies a permission check. A role that no longer exists
-// yields no rows and is therefore denied.
-func (r *memberRepository) HasPermission(ctx context.Context, tenantID, roleID uuid.UUID, permission string) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).
-		Table("role_permissions rp").
-		Joins("JOIN permissions p ON p.id = rp.permission_id").
-		Joins("JOIN roles ro ON ro.id = rp.role_id").
-		Where("rp.role_id = ? AND p.name = ?", roleID, permission).
-		Where("ro.tenant_id = ? OR ro.tenant_id IS NULL", tenantID).
-		Count(&count).Error
-	return count > 0, err
+// HasActiveMemberPermission answers whether the caller's membership grants permission while
+// operating on the query's tenant. The membership must be active, not soft-deleted, and still
+// carry the role; the role must belong to that tenant or be a system role (tenant_id IS NULL),
+// so a role from another tenant never satisfies a permission check. See
+// ActiveMemberHasPermission.
+func (r *memberRepository) HasActiveMemberPermission(ctx context.Context, query domain.MemberPermissionQuery) (bool, error) {
+	return ActiveMemberHasPermission(ctx, r.db, query)
 }
 
 func (r *memberRepository) ListTutors(ctx context.Context, tenantID uuid.UUID, query domain.TutorQuery) ([]domain.TutorResponse, int64, error) {
