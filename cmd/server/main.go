@@ -11,6 +11,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	_ "github.com/kelolakelas/kelolakelas-identity-service/docs"
 	"github.com/kelolakelas/kelolakelas-identity-service/internal/config"
@@ -113,8 +115,14 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.RequestLog(), gin.Recovery())
 
-	// Health check endpoint
+	// Liveness never probes dependencies; readiness does.
 	r.GET("/health", healthHandler("identity-service"))
+	sqlDB, err := db.DB()
+	if err != nil {
+		slog.Error("Failed to access database pool", "error", err)
+		os.Exit(1)
+	}
+	r.GET("/ready", readinessHandler(sqlDB, rdb))
 
 	// Swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -193,6 +201,9 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(idgrpc.RequestLog))
+		grpcHealth := health.NewServer()
+		grpcHealth.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+		healthpb.RegisterHealthServer(grpcServer, grpcHealth)
 		// ADR 0002 transition window: while PERMISSION_REQUIRE_TENANT_ID is unset,
 		// CheckPermission still answers academic deployments that have not been upgraded
 		// yet and do not send tenant_id.
