@@ -41,6 +41,7 @@ type RoleUsecase interface {
 	DeleteCustomRole(ctx context.Context, tenantID, callerRoleID, roleID uuid.UUID) error
 }
 
+// PermissionChecker answers whether an active membership grants a permission (KEL-76).
 type PermissionChecker interface {
-	HasPermission(ctx context.Context, tenantID, roleID uuid.UUID, permission string) (bool, error)
+	HasActiveMemberPermission(ctx context.Context, query domain.MemberPermissionQuery) (bool, error)
 }

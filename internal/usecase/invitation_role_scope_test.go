@@ -16,7 +16,7 @@ type invitationRoleScopePermissionStub struct {
 	err     error
 }
 
-func (s *invitationRoleScopePermissionStub) HasPermission(context.Context, uuid.UUID, uuid.UUID, string) (bool, error) {
+func (s *invitationRoleScopePermissionStub) HasActiveMemberPermission(context.Context, domain.MemberPermissionQuery) (bool, error) {
 	return s.allowed, s.err
 }
 
@@ -147,7 +147,7 @@ func TestCreateInvitationRejectsRoleFromAnotherTenant(t *testing.T) {
 		emailService,
 	)
 
-	_, err := usecase.CreateInvitation(context.Background(), tenantID, callerRoleID, foreignRoleID, "member@example.com")
+	_, err := usecase.CreateInvitation(callerContext(), tenantID, callerRoleID, foreignRoleID, "member@example.com")
 	if !errors.Is(err, domain.ErrInvitationRoleInvalid) {
 		t.Fatalf("error = %v, want ErrInvitationRoleInvalid", err)
 	}
@@ -175,7 +175,7 @@ func TestCreateInvitationAcceptsTenantOwnedRole(t *testing.T) {
 		&invitationRoleScopeEmailStub{},
 	)
 
-	invitation, err := usecase.CreateInvitation(context.Background(), tenantID, callerRoleID, ownedRoleID, "member@example.com")
+	invitation, err := usecase.CreateInvitation(callerContext(), tenantID, callerRoleID, ownedRoleID, "member@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -203,7 +203,7 @@ func TestCreateInvitationAcceptsSystemRoleForAnyTenant(t *testing.T) {
 		&invitationRoleScopeEmailStub{},
 	)
 
-	invitation, err := usecase.CreateInvitation(context.Background(), tenantID, uuid.New(), systemRoleID, "member@example.com")
+	invitation, err := usecase.CreateInvitation(callerContext(), tenantID, uuid.New(), systemRoleID, "member@example.com")
 	if err != nil {
 		t.Fatalf("system role rejected: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestCreateInvitationRejectsUnknownRole(t *testing.T) {
 		&invitationRoleScopeEmailStub{},
 	)
 
-	_, err := usecase.CreateInvitation(context.Background(), tenantID, uuid.New(), uuid.New(), "member@example.com")
+	_, err := usecase.CreateInvitation(callerContext(), tenantID, uuid.New(), uuid.New(), "member@example.com")
 	if !errors.Is(err, domain.ErrInvitationRoleInvalid) {
 		t.Fatalf("error = %v, want ErrInvitationRoleInvalid", err)
 	}
@@ -250,7 +250,7 @@ func TestCreateInvitationStillRequiresPermission(t *testing.T) {
 		&invitationRoleScopeEmailStub{},
 	)
 
-	_, err := usecase.CreateInvitation(context.Background(), tenantID, uuid.New(), uuid.New(), "member@example.com")
+	_, err := usecase.CreateInvitation(callerContext(), tenantID, uuid.New(), uuid.New(), "member@example.com")
 	if !errors.Is(err, domain.ErrPermissionDenied) {
 		t.Fatalf("error = %v, want permission denied", err)
 	}

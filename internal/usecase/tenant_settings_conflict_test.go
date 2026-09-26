@@ -46,7 +46,7 @@ func TestUpdateTenantSettingsNameAvailability(t *testing.T) {
 			tenant := &domain.Tenant{ID: id, Name: "Current Tenant"}
 			repo := &settingsTenantRepo{invitationRoleScopeTenantStub: invitationRoleScopeTenantStub{tenant: tenant}, conflict: tc.conflict, lookupErr: tc.lookupErr}
 			u := &tenantUsecase{tenantRepo: repo, permissions: &invitationRoleScopePermissionStub{allowed: true}}
-			_, err := u.UpdateTenantSettings(context.Background(), id, roleID, &domain.UpdateTenantSettingsRequest{Name: tc.requested})
+			_, err := u.UpdateTenantSettings(callerContext(), id, roleID, &domain.UpdateTenantSettingsRequest{Name: tc.requested})
 			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
 				t.Fatalf("error = %v, want %v", err, tc.wantErr)
 			}

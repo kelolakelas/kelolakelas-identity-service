@@ -75,7 +75,7 @@ func TestInvitationLifecycleResendScopeRevokeAndPermission(t *testing.T) {
 	mail := &invitationDeliveryEmailStub{}
 	permission := &invitationRoleScopePermissionStub{allowed: true}
 	u := NewInvitationUsecase(repo, &invitationRoleScopeTenantStub{tenant: &domain.Tenant{ID: tenant, Name: "Tenant"}}, &invitationRoleScopeUserStub{}, &invitationRoleScopeRbacStub{role: &domain.Role{ID: role, TenantID: &tenant}}, permission, mail)
-	ctx := context.Background()
+	ctx := callerContext()
 	first, err := u.CreateInvitation(ctx, tenant, role, role, "member@example.com")
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +122,7 @@ func TestCreateInvitationRejectsExistingAccountWithoutEmail(t *testing.T) {
 	repo := &lifecycleInvitationRepo{}
 	mail := &invitationDeliveryEmailStub{}
 	u := NewInvitationUsecase(repo, &invitationRoleScopeTenantStub{tenant: &domain.Tenant{ID: tenant}}, &existingInvitationUserRepo{user: &domain.User{ID: uuid.New()}}, &invitationRoleScopeRbacStub{role: &domain.Role{ID: role, TenantID: &tenant}}, &invitationRoleScopePermissionStub{allowed: true}, mail)
-	_, err := u.CreateInvitation(context.Background(), tenant, role, role, "member@example.com")
+	_, err := u.CreateInvitation(callerContext(), tenant, role, role, "member@example.com")
 	if !errors.Is(err, domain.ErrUserAlreadyExists) || mail.calls != 0 || len(repo.invitations) != 0 {
 		t.Fatalf("existing user: %v emails=%d invitations=%d", err, mail.calls, len(repo.invitations))
 	}

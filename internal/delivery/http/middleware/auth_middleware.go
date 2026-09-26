@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/kelolakelas/kelolakelas-identity-service/internal/domain"
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
 )
 
@@ -55,8 +56,13 @@ func AuthMiddleware(jwtService *jwt.JWTService) gin.HandlerFunc {
 		c.Set("email", claims.Email)
 		c.Set("tenant_id", claims.TenantID)
 		c.Set("role_id", claims.RoleID)
+		c.Set("member_id", claims.MemberID)
 		c.Set("is_platform_admin", claims.IsPlatformAdmin && claims.PlatformFactorVersion > 0 && !claims.PlatformPending)
 		c.Set("platform_factor_version", claims.PlatformFactorVersion)
+		// Permission checks require the token's user (and membership, when the token carries
+		// the member_id claim) to still hold an active membership with the token's role
+		// (KEL-76), so the verified caller travels with the request context to the usecases.
+		c.Request = c.Request.WithContext(domain.WithCaller(c.Request.Context(), domain.Caller{UserID: claims.UserID, MemberID: claims.MemberID}))
 
 		c.Next()
 	}
