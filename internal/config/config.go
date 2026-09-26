@@ -35,6 +35,8 @@ type Config struct {
 	ResendAPIKey               string `mapstructure:"RESEND_API_KEY"`
 	ResendFromEmail            string `mapstructure:"RESEND_FROM_EMAIL"`
 	PasswordResetTTLMinutes    int    `mapstructure:"PASSWORD_RESET_TTL_MINUTES"`
+	LoginFailureThreshold      int    `mapstructure:"LOGIN_FAILURE_THRESHOLD"`
+	LoginLockoutMinutes        int    `mapstructure:"LOGIN_LOCKOUT_MINUTES"`
 	GoogleMapsAPIKey           string `mapstructure:"GOOGLE_MAPS_API_KEY"`
 	GoogleMapsGeocodingEnabled bool   `mapstructure:"GOOGLE_MAPS_GEOCODING_ENABLED"`
 	GoogleMapsTimeoutSeconds   int    `mapstructure:"GOOGLE_MAPS_TIMEOUT_SECONDS"`
@@ -65,7 +67,7 @@ func LoadConfig() (Config, error) {
 	for _, key := range []string{
 		"DATABASE_URL", "DB_HOST", "DB_PORT", "DB_SSLMODE", "DB_CHANNEL_BINDING", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PLATFORM_FACTOR_KEY", "PORT", "APP_URL",
-		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "PASSWORD_RESET_TTL_MINUTES", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
+		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "PASSWORD_RESET_TTL_MINUTES", "LOGIN_FAILURE_THRESHOLD", "LOGIN_LOCKOUT_MINUTES", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
 		"PERMISSION_REQUIRE_TENANT_ID",
 	} {
 		if err := viper.BindEnv(key); err != nil {
@@ -89,6 +91,15 @@ func LoadConfig() (Config, error) {
 			return Config{}, fmt.Errorf("PASSWORD_RESET_TTL_MINUTES must be a positive integer that fits a duration")
 		}
 	}
+	// Defaults: lock an account after five consecutive failures for 15 minutes.
+	loginThreshold, err := positiveConfigInt("LOGIN_FAILURE_THRESHOLD", 5)
+	if err != nil {
+		return Config{}, err
+	}
+	loginMinutes, err := positiveConfigInt("LOGIN_LOCKOUT_MINUTES", 15)
+	if err != nil || int64(loginMinutes) > int64((1<<63-1)/int64(time.Minute)) {
+		return Config{}, fmt.Errorf("LOGIN_LOCKOUT_MINUTES must be a positive integer that fits a duration")
+	}
 	parsedRedisDB := 0
 	if redisDB := viper.GetString("REDIS_DB"); redisDB != "" {
 		var err error
@@ -105,6 +116,8 @@ func LoadConfig() (Config, error) {
 	config.RedisTLS = parsedRedisTLS
 	config.RedisDB = parsedRedisDB
 	config.PasswordResetTTLMinutes = resetTTL
+	config.LoginFailureThreshold = loginThreshold
+	config.LoginLockoutMinutes = loginMinutes
 	config.GoogleMapsGeocodingEnabled = viper.GetBool("GOOGLE_MAPS_GEOCODING_ENABLED")
 	config.GoogleMapsTimeoutSeconds = viper.GetInt("GOOGLE_MAPS_TIMEOUT_SECONDS")
 	if err := applyDatabaseURL(&config); err != nil {
@@ -153,6 +166,18 @@ func LoadConfig() (Config, error) {
 	}
 
 	return config, nil
+}
+
+func positiveConfigInt(key string, fallback int) (int, error) {
+	raw := viper.GetString(key)
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer", key)
+	}
+	return value, nil
 }
 
 func applyDatabaseURL(config *Config) error {

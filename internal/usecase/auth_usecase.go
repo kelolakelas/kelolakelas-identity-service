@@ -18,6 +18,14 @@ import (
 	"github.com/kelolakelas/kelolakelas-identity-service/pkg/jwt"
 )
 
+var dummyLoginHash = func() string {
+	value, err := hash.HashPassword("dummy login password")
+	if err != nil {
+		panic(err)
+	}
+	return value
+}()
+
 type authUsecase struct {
 	userRepo     domain.UserRepository
 	jwtService   *jwt.JWTService
@@ -25,6 +33,22 @@ type authUsecase struct {
 	resets       domain.PasswordResetRepository
 	resetEmail   interface{ SendPasswordResetEmail(string, string) error }
 	resetTTL     time.Duration
+	loginStore   interface {
+		Authenticate(context.Context, string, string, string, int, time.Duration) (*domain.User, error)
+	}
+	loginThreshold int
+	loginDuration  time.Duration
+	dummyHash      string
+}
+
+func (u *authUsecase) WithLoginProtection(store interface {
+	Authenticate(context.Context, string, string, string, int, time.Duration) (*domain.User, error)
+}, threshold int, duration time.Duration) error {
+	if threshold < 1 || duration <= 0 || store == nil {
+		return errors.New("invalid login protection configuration")
+	}
+	u.loginStore, u.loginThreshold, u.loginDuration = store, threshold, duration
+	return nil
 }
 
 func NewAuthUsecase(userRepo domain.UserRepository, jwtService *jwt.JWTService, redisService *database.RedisService) *authUsecase {
@@ -32,6 +56,7 @@ func NewAuthUsecase(userRepo domain.UserRepository, jwtService *jwt.JWTService, 
 		userRepo:     userRepo,
 		jwtService:   jwtService,
 		redisService: redisService,
+		dummyHash:    dummyLoginHash,
 	}
 }
 
@@ -113,18 +138,22 @@ func (u *authUsecase) ConfirmPasswordReset(ctx context.Context, token, password 
 }
 
 func (u *authUsecase) Login(ctx context.Context, email, password string) (string, *domain.User, uuid.UUID, error) {
-	// Get user
-	user, err := u.userRepo.GetByEmail(ctx, email)
-	if err != nil {
+	var user *domain.User
+	var err error
+	if u.loginStore != nil {
+		user, err = u.loginStore.Authenticate(ctx, email, password, u.dummyHash, u.loginThreshold, u.loginDuration)
+	} else {
+		user, err = u.userRepo.GetByEmail(ctx, email)
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return "", nil, uuid.Nil, domain.ErrInvalidCredentials
+			// Keep legacy test construction safe while production uses the persistent store.
+			_ = hash.CheckPasswordHash(password, u.dummyHash)
+			err = domain.ErrInvalidCredentials
+		} else if err == nil && !hash.CheckPasswordHash(password, user.PasswordHash) {
+			err = domain.ErrInvalidCredentials
 		}
-		return "", nil, uuid.Nil, err
 	}
-
-	// Verify password
-	if !hash.CheckPasswordHash(password, user.PasswordHash) {
-		return "", nil, uuid.Nil, domain.ErrInvalidCredentials
+	if err != nil {
+		return "", nil, uuid.Nil, err
 	}
 
 	// Find active tenant member

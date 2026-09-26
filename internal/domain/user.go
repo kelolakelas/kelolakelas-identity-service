@@ -37,17 +37,19 @@ type ErrorResponse struct {
 }
 
 type User struct {
-	ID                uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Email             string         `gorm:"type:varchar(255);unique;not null" json:"email"`
-	PasswordHash      string         `gorm:"type:varchar(255);not null" json:"-"`
-	SessionValidAfter *time.Time     `gorm:"type:timestamptz" json:"-"`
-	FirstName         string         `gorm:"type:varchar(255);not null" json:"first_name"`
-	LastName          string         `gorm:"type:varchar(255);not null" json:"last_name"`
-	Phone             *string        `gorm:"type:varchar(50)" json:"phone,omitempty"`
-	IsParent          bool           `gorm:"type:boolean;default:false" json:"is_parent"`
-	CreatedAt         time.Time      `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
-	UpdatedAt         time.Time      `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
-	DeletedAt         gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                  uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Email               string         `gorm:"type:varchar(255);unique;not null" json:"email"`
+	PasswordHash        string         `gorm:"type:varchar(255);not null" json:"-"`
+	SessionValidAfter   *time.Time     `gorm:"type:timestamptz" json:"-"`
+	FailedLoginAttempts int            `gorm:"not null;default:0" json:"-"`
+	LoginLockedUntil    *time.Time     `gorm:"type:timestamptz" json:"-"`
+	FirstName           string         `gorm:"type:varchar(255);not null" json:"first_name"`
+	LastName            string         `gorm:"type:varchar(255);not null" json:"last_name"`
+	Phone               *string        `gorm:"type:varchar(50)" json:"phone,omitempty"`
+	IsParent            bool           `gorm:"type:boolean;default:false" json:"is_parent"`
+	CreatedAt           time.Time      `gorm:"type:timestamp;not null;default:now()" json:"created_at"`
+	UpdatedAt           time.Time      `gorm:"type:timestamp;not null;default:now()" json:"updated_at"`
+	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 type UserRepository interface {

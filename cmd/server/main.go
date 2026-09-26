@@ -76,6 +76,10 @@ func main() {
 
 	resetStore := repository.NewPasswordResetRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, redisService).WithPasswordReset(resetStore, emailService, time.Duration(cfg.PasswordResetTTLMinutes)*time.Minute)
+	if err := authUsecase.WithLoginProtection(repository.NewLoginAttemptStore(db), cfg.LoginFailureThreshold, time.Duration(cfg.LoginLockoutMinutes)*time.Minute); err != nil {
+		slog.Error("Failed to configure login protection", "error", err)
+		os.Exit(1)
+	}
 	factorKey, err := hex.DecodeString(cfg.PlatformFactorKey)
 	if err != nil || len(factorKey) != 32 {
 		slog.Error("PLATFORM_FACTOR_KEY must be 32 bytes hex")
