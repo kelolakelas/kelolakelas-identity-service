@@ -12,6 +12,7 @@ var (
 	ErrMemberNotFound         = errors.New("member not found")
 	ErrMemberRoleForbidden    = errors.New("member role cannot be changed")
 	ErrMemberRoleConflict     = errors.New("role does not belong to tenant")
+	ErrMemberSelfRoleChange   = errors.New("caller cannot change own member role")
 	ErrMemberPermission       = errors.New("member role update permission required")
 	ErrMemberDeletePermission = errors.New("member delete permission required")
 )
@@ -86,7 +87,9 @@ type UpdateMemberRoleRequest struct {
 type MemberRepository interface {
 	List(ctx context.Context, tenantID uuid.UUID, query MemberQuery) ([]MemberResponse, int64, error)
 	GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*MemberResponse, error)
-	UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID) (*MemberResponse, error)
+	// UpdateRole moves the tenant's member to roleID on behalf of actor. It rejects a target
+	// membership that belongs to actor (ErrMemberSelfRoleChange, KEL-79) before any write.
+	UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID, actor Caller) (*MemberResponse, error)
 	Delete(ctx context.Context, tenantID, memberID uuid.UUID) error
 	// HasActiveMemberPermission grants a permission only through an active membership in the
 	// tenant that currently carries the role (KEL-76).

@@ -44,7 +44,16 @@ func (r *memberRepository) Delete(ctx context.Context, tenantID, memberID uuid.U
 	return nil
 }
 
-func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID) (*domain.MemberResponse, error) {
+// UpdateRole moves a tenant member to another role inside one transaction. Every guard runs
+// before the write, so a rejected request leaves the membership unchanged:
+//   - the member must belong to the tenant (ErrMemberNotFound);
+//   - the actor may not change their own membership (ErrMemberSelfRoleChange, KEL-79);
+//   - the target role must be the tenant's own role or a system role (ErrMemberRoleConflict);
+//   - the system Creator role is never granted here (ErrCreatorGrantForbidden, KEL-94);
+//   - a member whose current role is the system Creator keeps it until the Creator
+//     demotion policy is decided (ErrMemberRoleForbidden). Other current roles, including
+//     the system Teacher role, may be changed (KEL-79).
+func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID, actor domain.Caller) (*domain.MemberResponse, error) {
 	var member domain.TenantMember
 	var role domain.Role
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -54,20 +63,23 @@ func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, r
 			}
 			return err
 		}
+		if isOwnMembership(member, actor) {
+			return domain.ErrMemberSelfRoleChange
+		}
 		if err := tx.Where("id = ? AND (tenant_id = ? OR tenant_id IS NULL)", roleID, tenantID).First(&role).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return domain.ErrMemberRoleConflict
 			}
 			return err
 		}
-		if role.TenantID == nil && role.Name == "Creator" {
+		if isSystemCreatorRole(role) {
 			return domain.ErrCreatorGrantForbidden
 		}
 		var current domain.Role
 		if err := tx.First(&current, "id = ?", member.RoleID).Error; err != nil {
 			return err
 		}
-		if current.TenantID == nil {
+		if isSystemCreatorRole(current) {
 			return domain.ErrMemberRoleForbidden
 		}
 		return tx.Model(&member).Update("role_id", roleID).Error
@@ -76,6 +88,20 @@ func (r *memberRepository) UpdateRole(ctx context.Context, tenantID, memberID, r
 		return nil, err
 	}
 	return r.GetByID(ctx, tenantID, memberID)
+}
+
+func isSystemCreatorRole(role domain.Role) bool {
+	return role.TenantID == nil && role.Name == "Creator"
+}
+
+// isOwnMembership reports whether member is the actor's membership. The member_id claim pins
+// it exactly; the user id also matches, which covers tokens issued without member_id (a user
+// has at most one membership per tenant).
+func isOwnMembership(member domain.TenantMember, actor domain.Caller) bool {
+	if actor.MemberID != uuid.Nil && member.ID == actor.MemberID {
+		return true
+	}
+	return actor.UserID != uuid.Nil && member.UserID == actor.UserID
 }
 
 // HasActiveMemberPermission answers whether the caller's membership grants permission while

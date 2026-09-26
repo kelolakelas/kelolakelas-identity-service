@@ -21,7 +21,7 @@ func TestUpdateRoleCreatorDeniedWithinTransaction(t *testing.T) {
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"tenant_members\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "tenant_id", "role_id"}).AddRow(member, tenant, uuid.New()))
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"roles\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "tenant_id", "name"}).AddRow(target, nil, "Creator"))
 			mock.ExpectRollback()
-			result, err := repo.UpdateRole(context.Background(), tenant, member, target)
+			result, err := repo.UpdateRole(context.Background(), tenant, member, target, domain.Caller{UserID: uuid.New(), MemberID: uuid.New()})
 			if !errors.Is(err, domain.ErrCreatorGrantForbidden) || result != nil {
 				t.Fatalf("result=%+v err=%v", result, err)
 			}
