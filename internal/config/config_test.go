@@ -112,6 +112,40 @@ func TestRedisConfiguration(t *testing.T) {
 	}
 }
 
+func TestLoginProtectionConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name, threshold, minutes   string
+		wantThreshold, wantMinutes int
+		wantErr                    bool
+	}{
+		{name: "defaults", wantThreshold: 5, wantMinutes: 15},
+		{name: "configured", threshold: "3", minutes: "2", wantThreshold: 3, wantMinutes: 2},
+		{name: "zero threshold", threshold: "0", wantErr: true},
+		{name: "invalid threshold", threshold: "abc", wantErr: true},
+		{name: "negative minutes", minutes: "-1", wantErr: true},
+		{name: "duration overflow", minutes: "9223372036854775807", wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			viper.Reset()
+			t.Chdir(t.TempDir())
+			t.Setenv("DATABASE_URL", "")
+			t.Setenv("JWT_SECRET", "test-jwt-secret")
+			t.Setenv("LOGIN_FAILURE_THRESHOLD", tc.threshold)
+			t.Setenv("LOGIN_LOCKOUT_MINUTES", tc.minutes)
+			cfg, err := LoadConfig()
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("expected invalid login configuration")
+				}
+				return
+			}
+			if err != nil || cfg.LoginFailureThreshold != tc.wantThreshold || cfg.LoginLockoutMinutes != tc.wantMinutes {
+				t.Fatalf("login configuration: %+v, %v", cfg, err)
+			}
+		})
+	}
+}
+
 func TestChannelBindingEnvironmentOverridesDatabaseURL(t *testing.T) {
 	viper.Reset()
 	t.Chdir(t.TempDir())
