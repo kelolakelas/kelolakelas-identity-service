@@ -102,6 +102,7 @@ func main() {
 	memberHandler := handler.NewMemberHandler(memberUsecase)
 	creatorRequestHandler := handler.NewCreatorRequestHandler(usecase.NewCreatorRequestUsecase(repository.NewCreatorRequestRepository(db)))
 	creatorDecisionHandler := handler.NewCreatorDecisionHandler(usecase.NewCreatorDecisionUsecase(repository.NewCreatorDecisionRepository(db), emailService))
+	platformCreatorRequestHandler := handler.NewPlatformCreatorRequestHandler(repository.NewPlatformCreatorRequestRepository(db))
 	tenantHandler := handler.NewTenantHandler(tenantUsecase)
 
 	// Gin Router
@@ -145,6 +146,7 @@ func main() {
 		platform.GET("/catalog-policy", publicCatalogPolicyHandler.Get)
 		platform.POST("/catalog-policy/close", publicCatalogPolicyHandler.Close)
 		platform.POST("/catalog-policy/open", publicCatalogPolicyHandler.Open)
+		platform.GET("/creator-requests", platformCreatorRequestHandler.List)
 		platform.POST("/creator-requests/:id/approve", creatorDecisionHandler.Approve)
 		platform.POST("/creator-requests/:id/reject", creatorDecisionHandler.Reject)
 
