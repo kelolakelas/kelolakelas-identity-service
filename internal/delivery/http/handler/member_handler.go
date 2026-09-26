@@ -204,8 +204,11 @@ func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
 	if errors.Is(err, domain.ErrMemberRoleConflict) {
 		status, message = http.StatusConflict, "Role does not belong to tenant"
 	}
+	if errors.Is(err, domain.ErrMemberSelfRoleChange) {
+		status, message = http.StatusConflict, "You cannot change your own member role"
+	}
 	if errors.Is(err, domain.ErrMemberRoleForbidden) {
-		status, message = http.StatusForbidden, "System role cannot be changed"
+		status, message = http.StatusForbidden, "Creator role cannot be changed"
 	}
 	if errors.Is(err, domain.ErrCreatorGrantForbidden) {
 		status, message = http.StatusForbidden, "Creator role requires platform approval"

@@ -19,6 +19,10 @@ type memberRepositoryStub struct {
 	deleted          bool
 	permissionTenant uuid.UUID
 	permissionQuery  domain.MemberPermissionQuery
+	updateCalls      int
+	updateErr        error
+	updateActor      domain.Caller
+	updateArgs       [3]uuid.UUID
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -30,7 +34,13 @@ func (s *memberRepositoryStub) GetByID(context.Context, uuid.UUID, uuid.UUID) (*
 	return nil, s.err
 }
 
-func (s *memberRepositoryStub) UpdateRole(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (*domain.MemberResponse, error) {
+func (s *memberRepositoryStub) UpdateRole(_ context.Context, tenantID, memberID, roleID uuid.UUID, actor domain.Caller) (*domain.MemberResponse, error) {
+	s.updateCalls++
+	s.updateActor = actor
+	s.updateArgs = [3]uuid.UUID{tenantID, memberID, roleID}
+	if s.updateErr != nil {
+		return nil, s.updateErr
+	}
 	return nil, s.err
 }
 
@@ -108,6 +118,26 @@ func TestMemberUsecaseUpdateRoleRequiresCallerMembership(t *testing.T) {
 	}
 	if noCaller.permissionQuery != (domain.MemberPermissionQuery{}) {
 		t.Fatalf("lookup made without a caller: %+v", noCaller.permissionQuery)
+	}
+	if denied.updateCalls != 0 || noCaller.updateCalls != 0 {
+		t.Fatalf("repository reached without permission: denied=%d noCaller=%d", denied.updateCalls, noCaller.updateCalls)
+	}
+}
+
+// TestMemberUsecaseUpdateRolePassesVerifiedCallerToRepository proves the repository receives
+// the verified caller, so its self-target guard (KEL-79) sees who is acting, and that the
+// repository's guard errors reach the handler unchanged.
+func TestMemberUsecaseUpdateRolePassesVerifiedCallerToRepository(t *testing.T) {
+	tenantID, callerRoleID, memberID, roleID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	for _, repoErr := range []error{nil, domain.ErrMemberSelfRoleChange, domain.ErrMemberRoleConflict, domain.ErrCreatorGrantForbidden, domain.ErrMemberRoleForbidden} {
+		stub := &memberRepositoryStub{allowed: true, updateErr: repoErr}
+		_, err := NewMemberUsecase(stub).UpdateRole(callerContext(), tenantID, callerRoleID, memberID, roleID)
+		if !errors.Is(err, repoErr) {
+			t.Fatalf("error = %v, want %v", err, repoErr)
+		}
+		if stub.updateCalls != 1 || stub.updateActor != testCaller || stub.updateArgs != [3]uuid.UUID{tenantID, memberID, roleID} {
+			t.Fatalf("update calls=%d actor=%+v args=%v", stub.updateCalls, stub.updateActor, stub.updateArgs)
+		}
 	}
 }
 

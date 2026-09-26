@@ -47,7 +47,9 @@ func (u *memberUsecase) UpdateRole(ctx context.Context, tenantID, callerRoleID, 
 	if !allowed {
 		return nil, domain.ErrMemberPermission
 	}
-	return u.repo.UpdateRole(ctx, tenantID, memberID, roleID)
+	// callerHasPermission only allows a request that carries a verified caller.
+	caller, _ := domain.CallerFromContext(ctx)
+	return u.repo.UpdateRole(ctx, tenantID, memberID, roleID, caller)
 }
 
 func (u *memberUsecase) Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error {
