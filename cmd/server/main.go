@@ -87,6 +87,8 @@ func main() {
 		usecase.NewConfigurationControlPlane(repository.NewConfigurationRepository(db)),
 		usecase.NewRegistrationPolicy(repository.NewConfigurationRepository(db)),
 	)
+	publicCatalogPolicy := usecase.NewPublicCatalogPolicy(repository.NewConfigurationRepository(db))
+	publicCatalogPolicyHandler := handler.NewPublicCatalogPolicyHandler(publicCatalogPolicy)
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
 	tenantUsecase := usecase.NewTenantUsecaseWithRegistrationPolicy(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient,
 		usecase.NewRegistrationPolicy(repository.NewConfigurationRepository(db)))
@@ -140,6 +142,9 @@ func main() {
 		platform.GET("/registration-policy", configurationHandler.RegistrationPolicy)
 		platform.POST("/registration-policy/close", configurationHandler.CloseRegistration)
 		platform.POST("/registration-policy/open", configurationHandler.OpenRegistration)
+		platform.GET("/catalog-policy", publicCatalogPolicyHandler.Get)
+		platform.POST("/catalog-policy/close", publicCatalogPolicyHandler.Close)
+		platform.POST("/catalog-policy/open", publicCatalogPolicyHandler.Open)
 		platform.POST("/creator-requests/:id/approve", creatorDecisionHandler.Approve)
 		platform.POST("/creator-requests/:id/reject", creatorDecisionHandler.Reject)
 
@@ -194,6 +199,7 @@ func main() {
 		tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
 		pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
 		idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
+		idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
 
 		slog.Info("Starting gRPC server on port :50051")
 		if err := grpcServer.Serve(lis); err != nil {

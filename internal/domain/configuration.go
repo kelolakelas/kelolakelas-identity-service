@@ -66,6 +66,45 @@ type RegistrationPolicyEvaluated struct {
 	DesiredVersion int64  `json:"desired_version"`
 }
 
+// Platform public catalog visibility policy (KEL-98).
+//
+// PublicCatalogApplication/PublicCatalogOpenKey identify the typed boolean
+// control-plane setting, owned by academic, that decides whether the public
+// class catalog (list and detail) shows any class. Like the registration policy
+// the effective value is the applied version: a desired version only takes
+// effect once it is acknowledged as applied, and version 0 (the seeded head
+// with no operator version) is the default-open behaviour. The setting never
+// changes class or tenant rows; academic hides catalog output while it is false.
+const (
+	PublicCatalogApplication = "academic"
+	PublicCatalogOpenKey     = "PUBLIC_CATALOG_OPEN"
+	PublicCatalogEnvironment = "platform"
+)
+
+// PublicCatalogPolicyEvaluated is the audit view of one effective public
+// catalog policy read: the outcome plus the applied and desired versions that
+// decided it. Academic receives the same view over gRPC, so the version it
+// enforces is the version platform admins see.
+type PublicCatalogPolicyEvaluated struct {
+	Application    string `json:"application"`
+	Key            string `json:"key"`
+	Environment    string `json:"environment"`
+	Open           bool   `json:"open"`
+	AppliedVersion int64  `json:"applied_version"`
+	DesiredVersion int64  `json:"desired_version"`
+}
+
+// PublicCatalogPolicy gates the public class catalog (KEL-98). Evaluate never
+// returns (Open=true, nil) unless the control plane positively reports an open
+// applied value (or the seeded default): a missing head, an unreadable store,
+// or a non-boolean applied value return an error so callers fail closed. Close
+// and Open append a desired version exactly like any other configuration value.
+type PublicCatalogPolicy interface {
+	Evaluate(context.Context) (PublicCatalogPolicyEvaluated, error)
+	Close(context.Context, uuid.UUID) (PublicCatalogPolicyEvaluated, error)
+	Open(context.Context, uuid.UUID) (PublicCatalogPolicyEvaluated, error)
+}
+
 type ConfigurationStatus string
 
 const (

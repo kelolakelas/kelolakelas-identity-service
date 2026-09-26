@@ -237,6 +237,21 @@ definitions:
       name:
         type: string
     type: object
+  github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated:
+    properties:
+      application:
+        type: string
+      applied_version:
+        type: integer
+      desired_version:
+        type: integer
+      environment:
+        type: string
+      key:
+        type: string
+      open:
+        type: boolean
+    type: object
   github_com_kelolakelas_kelolakelas-identity-service_internal_domain.RegisterTenantRequest:
     properties:
       email:
@@ -1308,6 +1323,110 @@ paths:
       summary: Get all system permissions
       tags:
       - Roles & Permissions
+  /api/v1/platform/catalog-policy:
+    get:
+      description: Returns the effective open/closed state that academic enforces
+        for the public catalog list and detail, with the applied and desired configuration
+        versions that decided it.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Read the public catalog visibility policy
+      tags:
+      - Platform Configuration
+  /api/v1/platform/catalog-policy/close:
+    post:
+      description: Appends a desired configuration version that hides every class
+        from the public catalog list and detail. Classes and tenants are not changed.
+        The catalog closes once the operator acknowledges the version as applied.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Close the public catalog
+      tags:
+      - Platform Configuration
+  /api/v1/platform/catalog-policy/open:
+    post:
+      description: Appends a desired configuration version that shows the public catalog
+        again under the existing published/active rules. The catalog reopens once
+        the operator acknowledges the version as applied.
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reopen the public catalog
+      tags:
+      - Platform Configuration
   /api/v1/platform/configurations:
     get:
       description: Lists metadata and current version state for all five applications.

@@ -1037,6 +1037,174 @@
                 }
             }
         },
+        "/api/v1/platform/catalog-policy": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the effective open/closed state that academic enforces for the public catalog list and detail, with the applied and desired configuration versions that decided it.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Read the public catalog visibility policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/catalog-policy/close": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Appends a desired configuration version that hides every class from the public catalog list and detail. Classes and tenants are not changed. The catalog closes once the operator acknowledges the version as applied.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Close the public catalog",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/catalog-policy/open": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Appends a desired configuration version that shows the public catalog again under the existing published/active rules. The catalog reopens once the operator acknowledges the version as applied.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Reopen the public catalog",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/platform/configurations": {
             "get": {
                 "security": [
@@ -2911,6 +3079,29 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "applied_version": {
+                    "type": "integer"
+                },
+                "desired_version": {
+                    "type": "integer"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "open": {
+                    "type": "boolean"
                 }
             }
         },
