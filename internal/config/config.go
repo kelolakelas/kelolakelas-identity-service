@@ -46,7 +46,39 @@ type Config struct {
 	// send only role_id and permission; once every caller sends tenant_id, enabling this
 	// makes tenant_id mandatory and rejects requests that omit it.
 	PermissionRequireTenantID bool `mapstructure:"PERMISSION_REQUIRE_TENANT_ID"`
+
+	// ServerReadHeaderTimeout, ServerReadTimeout, ServerWriteTimeout and ServerIdleTimeout
+	// configure the HTTP server in seconds. ServerShutdownTimeout bounds how long HTTP and
+	// gRPC may drain in-flight work after SIGINT/SIGTERM before they are stopped forcibly.
+	ServerReadHeaderTimeout int `mapstructure:"SERVER_READ_HEADER_TIMEOUT_SECONDS"`
+	ServerReadTimeout       int `mapstructure:"SERVER_READ_TIMEOUT_SECONDS"`
+	ServerWriteTimeout      int `mapstructure:"SERVER_WRITE_TIMEOUT_SECONDS"`
+	ServerIdleTimeout       int `mapstructure:"SERVER_IDLE_TIMEOUT_SECONDS"`
+	ServerShutdownTimeout   int `mapstructure:"SERVER_SHUTDOWN_TIMEOUT_SECONDS"`
 }
+
+// Defaults for the server timeouts, in seconds. The HTTP values follow the gateway. A
+// zero, negative, or unset value uses the default; zero never disables a bound.
+const (
+	// DefaultServerReadHeaderTimeout closes a connection that stalls before sending its
+	// headers (slowloris).
+	DefaultServerReadHeaderTimeout = 5
+	// DefaultServerReadTimeout bounds reading the whole request, body included.
+	DefaultServerReadTimeout = 30
+	// DefaultServerWriteTimeout stays above the slowest outbound call a request makes
+	// (Resend 10s, geocoding GOOGLE_MAPS_TIMEOUT_SECONDS) so a slow but healthy response is
+	// not cut by the server itself.
+	DefaultServerWriteTimeout = 60
+	// DefaultServerIdleTimeout bounds how long a kept-alive connection may sit idle.
+	DefaultServerIdleTimeout = 120
+	// DefaultServerShutdownTimeout lets a request that has just started a 10-second
+	// outbound call finish, while staying inside a typical 30-second termination grace
+	// period.
+	DefaultServerShutdownTimeout = 15
+)
+
+// maxDurationSeconds is the largest number of seconds a time.Duration can hold.
+const maxDurationSeconds = int(int64(1<<63-1) / int64(time.Second))
 
 func LoadConfig() (Config, error) {
 	// Load using godotenv just to make sure OS environment is populated,
@@ -69,6 +101,8 @@ func LoadConfig() (Config, error) {
 		"REDIS_HOST", "REDIS_PORT", "REDIS_USERNAME", "REDIS_PASSWORD", "REDIS_TLS", "REDIS_DB", "JWT_SECRET", "PLATFORM_FACTOR_KEY", "PORT", "APP_URL",
 		"RESEND_API_KEY", "RESEND_FROM_EMAIL", "PASSWORD_RESET_TTL_MINUTES", "LOGIN_FAILURE_THRESHOLD", "LOGIN_LOCKOUT_MINUTES", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_GEOCODING_ENABLED", "GOOGLE_MAPS_TIMEOUT_SECONDS",
 		"PERMISSION_REQUIRE_TENANT_ID",
+		"SERVER_READ_HEADER_TIMEOUT_SECONDS", "SERVER_READ_TIMEOUT_SECONDS", "SERVER_WRITE_TIMEOUT_SECONDS",
+		"SERVER_IDLE_TIMEOUT_SECONDS", "SERVER_SHUTDOWN_TIMEOUT_SECONDS",
 	} {
 		if err := viper.BindEnv(key); err != nil {
 			return Config{}, err
@@ -164,8 +198,35 @@ func LoadConfig() (Config, error) {
 	if config.GoogleMapsTimeoutSeconds <= 0 {
 		config.GoogleMapsTimeoutSeconds = 5
 	}
+	if err := applyServerTimeouts(&config); err != nil {
+		return Config{}, err
+	}
 
 	return config, nil
+}
+
+// applyServerTimeouts replaces non-positive server timeouts with their defaults and rejects
+// values too large to become a time.Duration.
+func applyServerTimeouts(config *Config) error {
+	for _, timeout := range []struct {
+		key      string
+		value    *int
+		fallback int
+	}{
+		{"SERVER_READ_HEADER_TIMEOUT_SECONDS", &config.ServerReadHeaderTimeout, DefaultServerReadHeaderTimeout},
+		{"SERVER_READ_TIMEOUT_SECONDS", &config.ServerReadTimeout, DefaultServerReadTimeout},
+		{"SERVER_WRITE_TIMEOUT_SECONDS", &config.ServerWriteTimeout, DefaultServerWriteTimeout},
+		{"SERVER_IDLE_TIMEOUT_SECONDS", &config.ServerIdleTimeout, DefaultServerIdleTimeout},
+		{"SERVER_SHUTDOWN_TIMEOUT_SECONDS", &config.ServerShutdownTimeout, DefaultServerShutdownTimeout},
+	} {
+		if *timeout.value <= 0 {
+			*timeout.value = timeout.fallback
+		}
+		if *timeout.value > maxDurationSeconds {
+			return fmt.Errorf("%s (%d) is too large for a duration", timeout.key, *timeout.value)
+		}
+	}
+	return nil
 }
 
 func positiveConfigInt(key string, fallback int) (int, error) {

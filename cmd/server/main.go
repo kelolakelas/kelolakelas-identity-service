@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"log/slog"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -192,41 +195,54 @@ func main() {
 		}
 	}
 
-	// Start gRPC Server
-	go func() {
-		lis, err := net.Listen("tcp", ":50051")
-		if err != nil {
-			slog.Error("Failed to listen for gRPC", "error", err)
-			return
-		}
+	// Bind both listeners before serving so a port that cannot be bound stops startup
+	// with an error instead of leaving identity running with only one interface.
+	grpcListener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		slog.Error("Failed to listen for gRPC", "error", err)
+		os.Exit(1)
+	}
+	httpServer := newHTTPServer(cfg, r)
+	httpListener, err := net.Listen("tcp", httpServer.Addr)
+	if err != nil {
+		slog.Error("Failed to listen for HTTP", "error", err)
+		os.Exit(1)
+	}
 
-		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(idgrpc.RequestLog))
-		grpcHealth := health.NewServer()
-		grpcHealth.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-		healthpb.RegisterHealthServer(grpcServer, grpcHealth)
-		// ADR 0002 transition window: while PERMISSION_REQUIRE_TENANT_ID is unset,
-		// CheckPermission still answers academic deployments that have not been upgraded
-		// yet and do not send tenant_id.
-		idgrpc.RequirePermissionTenantID = cfg.PermissionRequireTenantID
-		if idgrpc.RequirePermissionTenantID {
-			slog.Info("CheckPermission requires tenant_id on every request")
-		} else {
-			slog.Warn("CheckPermission accepts requests without tenant_id (ADR 0002 transition window)")
-		}
-		tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
-		pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
-		idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
-		idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(idgrpc.RequestLog))
+	grpcHealth := health.NewServer()
+	grpcHealth.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(grpcServer, grpcHealth)
+	// ADR 0002 transition window: while PERMISSION_REQUIRE_TENANT_ID is unset,
+	// CheckPermission still answers academic deployments that have not been upgraded
+	// yet and do not send tenant_id.
+	idgrpc.RequirePermissionTenantID = cfg.PermissionRequireTenantID
+	if idgrpc.RequirePermissionTenantID {
+		slog.Info("CheckPermission requires tenant_id on every request")
+	} else {
+		slog.Warn("CheckPermission accepts requests without tenant_id (ADR 0002 transition window)")
+	}
+	tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
+	pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
+	idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
+	idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
 
-		slog.Info("Starting gRPC server on port :50051")
-		if err := grpcServer.Serve(lis); err != nil {
-			slog.Error("Failed to serve gRPC", "error", err)
-		}
-	}()
+	// The signal handler stays registered for the whole shutdown, so a second SIGTERM
+	// does not cut the drain short; the shutdown timeout still bounds the exit.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	slog.Info("Starting identity service", "port", cfg.Port)
-	if err := r.Run("0.0.0.0:" + cfg.Port); err != nil {
-		slog.Error("Failed to start server", "error", err)
+	slog.Info("Starting gRPC server on port :50051")
+	slog.Info("Starting identity service",
+		"port", cfg.Port,
+		"server_read_header_timeout_seconds", cfg.ServerReadHeaderTimeout,
+		"server_read_timeout_seconds", cfg.ServerReadTimeout,
+		"server_write_timeout_seconds", cfg.ServerWriteTimeout,
+		"server_idle_timeout_seconds", cfg.ServerIdleTimeout,
+		"server_shutdown_timeout_seconds", cfg.ServerShutdownTimeout,
+	)
+	if err := serveUntilDone(ctx, httpServer, httpListener, grpcServer, grpcListener, time.Duration(cfg.ServerShutdownTimeout)*time.Second); err != nil {
+		slog.Error("Identity service stopped with error", "error", err)
 		os.Exit(1)
 	}
 }
