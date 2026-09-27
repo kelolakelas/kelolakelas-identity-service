@@ -222,13 +222,14 @@ func (h *MemberHandler) UpdateMemberRole(c *gin.Context) {
 
 // DeleteMember godoc
 // @Summary Remove a tenant member
-// @Description Soft delete a member from the active tenant.
+// @Description Soft delete a member from the active tenant. Requires member:delete. The caller's
+// @Description own membership cannot be removed (409).
 // @Tags Members
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Member UUID"
 // @Success 200 {object} domain.HTTPResponse
-// @Failure 400,401,403,404,500 {object} domain.ErrorResponse
+// @Failure 400,401,403,404,409,500 {object} domain.ErrorResponse
 // @Router /api/v1/members/{id} [delete]
 func (h *MemberHandler) DeleteMember(c *gin.Context) {
 	tenantID, err := tenantIDFromContext(c)
@@ -258,6 +259,9 @@ func (h *MemberHandler) DeleteMember(c *gin.Context) {
 	}
 	if errors.Is(err, domain.ErrMemberNotFound) {
 		status, message = http.StatusNotFound, "Member not found"
+	}
+	if errors.Is(err, domain.ErrMemberSelfRemoval) {
+		status, message = http.StatusConflict, "You cannot remove your own membership"
 	}
 	if err != nil {
 		c.JSON(status, gin.H{"status": "error", "message": message, "data": nil})

@@ -15,6 +15,7 @@ var (
 	ErrMemberSelfRoleChange   = errors.New("caller cannot change own member role")
 	ErrMemberPermission       = errors.New("member role update permission required")
 	ErrMemberDeletePermission = errors.New("member delete permission required")
+	ErrMemberSelfRemoval      = errors.New("caller cannot remove own membership")
 )
 
 type MemberQuery struct {
@@ -90,7 +91,9 @@ type MemberRepository interface {
 	// UpdateRole moves the tenant's member to roleID on behalf of actor. It rejects a target
 	// membership that belongs to actor (ErrMemberSelfRoleChange, KEL-79) before any write.
 	UpdateRole(ctx context.Context, tenantID, memberID, roleID uuid.UUID, actor Caller) (*MemberResponse, error)
-	Delete(ctx context.Context, tenantID, memberID uuid.UUID) error
+	// Delete soft-deletes the tenant's member on behalf of actor. It rejects a target
+	// membership that belongs to actor (ErrMemberSelfRemoval, KEL-81) before any write.
+	Delete(ctx context.Context, tenantID, memberID uuid.UUID, actor Caller) error
 	// HasActiveMemberPermission grants a permission only through an active membership in the
 	// tenant that currently carries the role (KEL-76).
 	HasActiveMemberPermission(ctx context.Context, query MemberPermissionQuery) (bool, error)

@@ -845,7 +845,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Soft delete a member from the active tenant.",
+                "description": "Soft delete a member from the active tenant. Requires member:delete. The caller's\nown membership cannot be removed (409).",
                 "produces": [
                     "application/json"
                 ],
@@ -889,6 +889,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
