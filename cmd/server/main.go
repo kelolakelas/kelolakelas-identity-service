@@ -98,6 +98,8 @@ func main() {
 	)
 	publicCatalogPolicy := usecase.NewPublicCatalogPolicy(repository.NewConfigurationRepository(db))
 	publicCatalogPolicyHandler := handler.NewPublicCatalogPolicyHandler(publicCatalogPolicy)
+	platformFeePolicy := usecase.NewPlatformFeePolicy(repository.NewConfigurationRepository(db))
+	platformFeePolicyHandler := handler.NewPlatformFeePolicyHandler(platformFeePolicy)
 	mapsClient := maps.NewClient(cfg.GoogleMapsAPIKey, cfg.GoogleMapsGeocodingEnabled, time.Duration(cfg.GoogleMapsTimeoutSeconds)*time.Second)
 	tenantUsecase := usecase.NewTenantUsecaseWithRegistrationPolicy(userRepo, tenantRepo, memberRepo, jwtService, redisService, mapsClient,
 		usecase.NewRegistrationPolicy(repository.NewConfigurationRepository(db)))
@@ -161,6 +163,8 @@ func main() {
 		platform.GET("/catalog-policy", publicCatalogPolicyHandler.Get)
 		platform.POST("/catalog-policy/close", publicCatalogPolicyHandler.Close)
 		platform.POST("/catalog-policy/open", publicCatalogPolicyHandler.Open)
+		platform.GET("/fee-policy", platformFeePolicyHandler.Get)
+		platform.POST("/fee-policy", platformFeePolicyHandler.Set)
 		platform.GET("/creator-requests", platformCreatorRequestHandler.List)
 		platform.POST("/creator-requests/:id/approve", creatorDecisionHandler.Approve)
 		platform.POST("/creator-requests/:id/reject", creatorDecisionHandler.Reject)
@@ -226,6 +230,7 @@ func main() {
 	pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
 	idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
 	idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
+	idgrpc.RegisterFeePolicyServiceServer(grpcServer, idgrpc.NewFeePolicyServer(platformFeePolicy))
 
 	// The signal handler stays registered for the whole shutdown, so a second SIGTERM
 	// does not cut the drain short; the shutdown timeout still bounds the exit.

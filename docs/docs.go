@@ -1769,6 +1769,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/platform/fee-policy": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the platform fee rule billing applies to new transactions (percent in basis points plus a fixed rupiah fee), whether an applied version exists, and the applied and desired configuration versions. Version 0 is the applied baseline of 0 bps + Rp0.",
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Read the platform fee policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PlatformFeePolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Appends a desired configuration version with percent_bps (0-2000) and fixed_fee (0-50000 rupiah). It applies only to transactions created after the operator acknowledges the version as applied; existing transactions keep their snapshot.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform Configuration"
+                ],
+                "summary": "Request a new platform fee policy",
+                "parameters": [
+                    {
+                        "description": "New platform fee rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_delivery_http_handler.PlatformFeePolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PlatformFeePolicyEvaluated"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/platform/registration-policy": {
             "get": {
                 "security": [
@@ -3202,6 +3330,35 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PlatformFeePolicyEvaluated": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "applied": {
+                    "type": "boolean"
+                },
+                "applied_version": {
+                    "type": "integer"
+                },
+                "desired_version": {
+                    "type": "integer"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "fixed_fee": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "percent_bps": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PublicCatalogPolicyEvaluated": {
             "type": "object",
             "properties": {
@@ -3701,6 +3858,23 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_delivery_http_handler.PlatformFeePolicyRequest": {
+            "type": "object",
+            "required": [
+                "fixed_fee",
+                "percent_bps"
+            ],
+            "properties": {
+                "fixed_fee": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "percent_bps": {
+                    "type": "integer",
+                    "example": 500
                 }
             }
         },
