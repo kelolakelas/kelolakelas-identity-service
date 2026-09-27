@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -103,6 +105,97 @@ type PublicCatalogPolicy interface {
 	Evaluate(context.Context) (PublicCatalogPolicyEvaluated, error)
 	Close(context.Context, uuid.UUID) (PublicCatalogPolicyEvaluated, error)
 	Open(context.Context, uuid.UUID) (PublicCatalogPolicyEvaluated, error)
+}
+
+// Platform fee policy (KEL-99).
+//
+// PlatformFeeApplication/PlatformFeePolicyKey identify the control-plane
+// setting, owned by billing, that decides the platform fee of every new
+// transaction: fee = floor(gross_amount * percent_bps / 10000) + fixed_fee.
+// One version binds both numbers, so the value is a single canonical string
+// "percent_bps=<n>,fixed_fee=<m>" (the configuration store only holds JSON
+// scalars). The effective policy is the most recently applied version; the
+// head seeded at version 0 by migration 000013 is the explicit applied baseline
+// of 0 bps and Rp0. A desired version has no effect until it is applied.
+const (
+	PlatformFeeApplication   = "billing"
+	PlatformFeePolicyKey     = "PLATFORM_FEE_POLICY"
+	PlatformFeeEnvironment   = "platform"
+	PlatformFeeMaxPercentBps = 2000
+	PlatformFeeMaxFixedFee   = 50000
+)
+
+var (
+	// ErrInvalidPlatformFeePolicy reports a percent or fixed fee outside the
+	// owner-approved bounds, or a stored value that is not the canonical form.
+	ErrInvalidPlatformFeePolicy = errors.New("platform fee policy must have percent_bps 0-2000 and fixed_fee 0-50000")
+	platformFeePolicyPattern    = regexp.MustCompile(`^percent_bps=(0|[1-9][0-9]{0,3}),fixed_fee=(0|[1-9][0-9]{0,4})$`)
+)
+
+// PlatformFeePolicyValue is one version's fee rule: basis points of the gross
+// amount plus a fixed rupiah amount per transaction.
+type PlatformFeePolicyValue struct {
+	PercentBps int64 `json:"percent_bps"`
+	FixedFee   int64 `json:"fixed_fee"`
+}
+
+// Validate enforces the owner-approved bounds (0-2000 bps, Rp0-Rp50000).
+func (v PlatformFeePolicyValue) Validate() error {
+	if v.PercentBps < 0 || v.PercentBps > PlatformFeeMaxPercentBps || v.FixedFee < 0 || v.FixedFee > PlatformFeeMaxFixedFee {
+		return ErrInvalidPlatformFeePolicy
+	}
+	return nil
+}
+
+// Encode returns the canonical stored form. It is the only form Parse accepts,
+// so a value written by the shortcut endpoint and one written through the
+// generic configuration endpoint are byte-for-byte comparable.
+func (v PlatformFeePolicyValue) Encode() string {
+	return fmt.Sprintf("percent_bps=%d,fixed_fee=%d", v.PercentBps, v.FixedFee)
+}
+
+// ParsePlatformFeePolicyValue decodes the canonical string strictly: any other
+// spelling, an out-of-range number, or extra text is an error, never a default.
+func ParsePlatformFeePolicyValue(text string) (PlatformFeePolicyValue, error) {
+	match := platformFeePolicyPattern.FindStringSubmatch(text)
+	if match == nil {
+		return PlatformFeePolicyValue{}, ErrInvalidPlatformFeePolicy
+	}
+	percent, percentErr := strconv.ParseInt(match[1], 10, 64)
+	fixed, fixedErr := strconv.ParseInt(match[2], 10, 64)
+	value := PlatformFeePolicyValue{PercentBps: percent, FixedFee: fixed}
+	if percentErr != nil || fixedErr != nil || value.Validate() != nil {
+		return PlatformFeePolicyValue{}, ErrInvalidPlatformFeePolicy
+	}
+	return value, nil
+}
+
+// PlatformFeePolicyEvaluated is the effective platform fee policy: the applied
+// rule plus the applied and desired versions. Billing receives the same view
+// over gRPC and snapshots AppliedVersion, PercentBps, and FixedFee on every new
+// transaction, so an invoice is always auditable against the rule it used.
+//
+// Applied is false when operator versions exist but none has been acknowledged
+// as applied yet: the rule is then unknown, PercentBps and FixedFee carry no
+// meaning, and the gRPC service refuses to answer so billing rejects invoices.
+type PlatformFeePolicyEvaluated struct {
+	Application    string `json:"application"`
+	Key            string `json:"key"`
+	Environment    string `json:"environment"`
+	Applied        bool   `json:"applied"`
+	PercentBps     int64  `json:"percent_bps"`
+	FixedFee       int64  `json:"fixed_fee"`
+	AppliedVersion int64  `json:"applied_version"`
+	DesiredVersion int64  `json:"desired_version"`
+}
+
+// PlatformFeePolicy decides the platform fee rule (KEL-99). Evaluate returns an
+// error, never a zero rule, when the head is missing, the store is unreadable,
+// or the applied value is malformed, so billing refuses to issue an invoice
+// instead of silently charging 0%. Set appends a desired version.
+type PlatformFeePolicy interface {
+	Evaluate(context.Context) (PlatformFeePolicyEvaluated, error)
+	Set(context.Context, uuid.UUID, PlatformFeePolicyValue) (PlatformFeePolicyEvaluated, error)
 }
 
 type ConfigurationStatus string

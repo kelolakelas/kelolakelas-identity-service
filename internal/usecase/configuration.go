@@ -213,6 +213,17 @@ func validateConfigurationValue(definition domain.ConfigurationDefinition, value
 		if _, ok := decoded.(bool); !ok {
 			return invalidConfiguration("value must be a boolean")
 		}
+	case "platform_fee_policy":
+		// KEL-99: one version binds the percent and the fixed fee, and billing
+		// rejects anything but the canonical form, so the control plane refuses
+		// it up front instead of storing a value that would block every invoice.
+		text, ok := decoded.(string)
+		if !ok {
+			return invalidConfiguration(`value must be a string "percent_bps=<0-2000>,fixed_fee=<0-50000>"`)
+		}
+		if _, err := domain.ParsePlatformFeePolicyValue(text); err != nil {
+			return invalidConfiguration(`value must be "percent_bps=<0-2000>,fixed_fee=<0-50000>" with percent_bps 0-2000 and fixed_fee 0-50000`)
+		}
 	case "integer":
 		number, ok := decoded.(json.Number)
 		if !ok {
