@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -22,14 +23,30 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
+	user.Email = domain.NormalizeEmail(user.Email)
 	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+		if isUserEmailConflict(err) {
 			return domain.ErrUserAlreadyExists
 		}
-		// In case GORM driver doesn't return ErrDuplicatedKey directly, we can also check for uniqueness
 		return err
 	}
 	return nil
+}
+
+// Unique indexes that make an account email unique. uq_users_email_lower is
+// the case-insensitive rule (migration 000011, KEL-89); users_email_key is the
+// original exact-match constraint from the initial schema.
+var userEmailUniqueConstraints = map[string]bool{"uq_users_email_lower": true, "users_email_key": true}
+
+// isUserEmailConflict reports whether a users insert lost the uniqueness race on
+// email. The lookup before insert is only advisory: two concurrent
+// registrations can both miss it, and the database index then decides.
+func isUserEmailConflict(err error) bool {
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return true
+	}
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505" && userEmailUniqueConstraints[pgErr.ConstraintName]
 }
 
 func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -45,7 +62,9 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Use
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	if err := r.db.WithContext(ctx).First(&user, "LOWER(email) = LOWER(?)", email).Error; err != nil {
+	// Legacy rows may be stored mixed-case; LOWER(email) matches them and is
+	// served by the uq_users_email_lower expression index.
+	if err := r.db.WithContext(ctx).First(&user, "LOWER(email) = ?", domain.NormalizeEmail(email)).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrUserNotFound
 		}
@@ -94,8 +113,9 @@ func (r *userRepository) RegisterTenantTx(ctx context.Context, user *domain.User
 		}
 
 		// 1. Create User
+		user.Email = domain.NormalizeEmail(user.Email)
 		if err := tx.Create(user).Error; err != nil {
-			if errors.Is(err, gorm.ErrDuplicatedKey) {
+			if isUserEmailConflict(err) {
 				return domain.ErrUserAlreadyExists
 			}
 			return err
@@ -224,10 +244,13 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 		if err := tx.First(&invitedRole, "id = ?", invitation.RoleID).Error; err != nil {
 			return err
 		}
+		// Invitations stored before KEL-89 may carry a mixed-case address; the
+		// account is always matched on, and created with, the canonical form.
+		invitedEmail := domain.NormalizeEmail(invitation.Email)
 		if invitedRole.TenantID == nil && invitedRole.Name == "Creator" {
 			// Only a platform-approved, email-bound request may redeem a Creator invitation.
 			var approved int64
-			if err := tx.Model(&domain.CreatorRequest{}).Where("invitation_id = ? AND tenant_id = ? AND target_email = ? AND status = ? AND target_user_id IS NULL", invitation.ID, invitation.TenantID, invitation.Email, "approved").Count(&approved).Error; err != nil {
+			if err := tx.Model(&domain.CreatorRequest{}).Where("invitation_id = ? AND tenant_id = ? AND LOWER(target_email) = ? AND status = ? AND target_user_id IS NULL", invitation.ID, invitation.TenantID, invitedEmail, "approved").Count(&approved).Error; err != nil {
 				return err
 			}
 			if approved != 1 {
@@ -241,8 +264,10 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 
 		// Check if user with invitation email already exists
 		var existingUser domain.User
-		if err := tx.Where("email = ?", invitation.Email).First(&existingUser).Error; err == nil {
+		if err := tx.Where("LOWER(email) = ?", invitedEmail).First(&existingUser).Error; err == nil {
 			return domain.ErrUserAlreadyExists
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
 
 		// Hash password
@@ -254,13 +279,16 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 		// 2. Insert to Users table
 		user = domain.User{
 			ID:           uuid.New(),
-			Email:        invitation.Email,
+			Email:        invitedEmail,
 			PasswordHash: hashedPassword,
 			FirstName:    firstName,
 			LastName:     lastName,
 			IsParent:     false,
 		}
 		if err := tx.Create(&user).Error; err != nil {
+			if isUserEmailConflict(err) {
+				return domain.ErrUserAlreadyExists
+			}
 			return err
 		}
 

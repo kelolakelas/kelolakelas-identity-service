@@ -53,6 +53,8 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 
 	// Registration via invitation creates a new account; any existing account
 	// would be unable to redeem the token. Do not send an unusable invitation.
+	// The invitation is stored and matched in canonical form (KEL-89).
+	emailAddr = domain.NormalizeEmail(emailAddr)
 	user, err := u.userRepo.GetByEmail(ctx, emailAddr)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, err

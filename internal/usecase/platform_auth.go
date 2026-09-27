@@ -26,7 +26,7 @@ func NewPlatformAuth(users domain.UserRepository, admins domain.PlatformAdminRep
 }
 
 func (a *PlatformAuth) Login(ctx context.Context, email, password string) (string, error) {
-	user, err := a.users.GetByEmail(ctx, email)
+	user, err := a.users.GetByEmail(ctx, domain.NormalizeEmail(email))
 	if errors.Is(err, domain.ErrUserNotFound) {
 		return "", domain.ErrInvalidCredentials
 	}

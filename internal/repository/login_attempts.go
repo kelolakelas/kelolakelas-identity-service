@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -27,7 +26,7 @@ func (s *loginAttemptStore) Authenticate(ctx context.Context, email, password, d
 	var authenticated *domain.User
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user domain.User
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("LOWER(email) = ?", strings.ToLower(email)).First(&user).Error
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("LOWER(email) = ?", domain.NormalizeEmail(email)).First(&user).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			_ = hash.CheckPasswordHash(password, dummyHash)
 			return domain.ErrInvalidCredentials

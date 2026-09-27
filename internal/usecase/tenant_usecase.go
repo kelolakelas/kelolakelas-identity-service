@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -125,10 +126,15 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 		return nil, domain.ErrTenantNameAlreadyExists
 	}
 
-	// Check if user already exists
-	existing, err := u.userRepo.GetByEmail(ctx, req.Email)
+	// Check if user already exists. Advisory for a clear 409: the
+	// case-insensitive unique index decides a concurrent race (KEL-89).
+	email := domain.NormalizeEmail(string(req.Email))
+	existing, err := u.userRepo.GetByEmail(ctx, email)
 	if err == nil && existing != nil {
 		return nil, domain.ErrUserAlreadyExists
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
 	}
 
 	// Hash password
@@ -139,7 +145,7 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 
 	user := &domain.User{
 		ID:           uuid.New(),
-		Email:        req.Email,
+		Email:        email,
 		PasswordHash: hashedPassword,
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,

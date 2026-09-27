@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -93,6 +94,9 @@ func (s *JWTService) GenerateVerifiedPlatformToken(userID uuid.UUID, email strin
 }
 
 func (s *JWTService) sign(claims Claims) (string, error) {
+	// Accounts are identified case-insensitively (KEL-89) and legacy rows may be
+	// stored mixed-case, so every issued token carries the canonical form.
+	claims.Email = strings.ToLower(strings.TrimSpace(claims.Email))
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(s.secretKey)
 }
