@@ -23,6 +23,10 @@ type memberRepositoryStub struct {
 	updateErr        error
 	updateActor      domain.Caller
 	updateArgs       [3]uuid.UUID
+	deleteCalls      int
+	deleteErr        error
+	deleteActor      domain.Caller
+	deleteArgs       [2]uuid.UUID
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -44,8 +48,14 @@ func (s *memberRepositoryStub) UpdateRole(_ context.Context, tenantID, memberID,
 	return nil, s.err
 }
 
-func (s *memberRepositoryStub) Delete(context.Context, uuid.UUID, uuid.UUID) error {
+func (s *memberRepositoryStub) Delete(_ context.Context, tenantID, memberID uuid.UUID, actor domain.Caller) error {
 	s.deleted = true
+	s.deleteCalls++
+	s.deleteActor = actor
+	s.deleteArgs = [2]uuid.UUID{tenantID, memberID}
+	if s.deleteErr != nil {
+		return s.deleteErr
+	}
 	return s.err
 }
 
@@ -95,6 +105,71 @@ func TestMemberUsecaseDelete(t *testing.T) {
 				t.Fatalf("permission query = %+v, want %+v", stub.permissionQuery, want)
 			}
 		})
+	}
+}
+
+// TestMemberUsecaseDeleteRejectsOwnMembershipBeforeRepository proves a caller whose token is
+// pinned to the target membership gets ErrMemberSelfRemoval without the repository being
+// reached, so nothing is written (KEL-81).
+func TestMemberUsecaseDeleteRejectsOwnMembershipBeforeRepository(t *testing.T) {
+	stub := &memberRepositoryStub{allowed: true}
+	err := NewMemberUsecase(stub).Delete(callerContext(), uuid.New(), uuid.New(), testCaller.MemberID)
+	if !errors.Is(err, domain.ErrMemberSelfRemoval) {
+		t.Fatalf("error = %v, want ErrMemberSelfRemoval", err)
+	}
+	if stub.deleteCalls != 0 || stub.deleted {
+		t.Fatalf("repository delete reached %d times for own membership", stub.deleteCalls)
+	}
+}
+
+// TestMemberUsecaseDeleteSelfRemovalNeedsPermissionFirst keeps the permission check first: a
+// caller without member:delete targeting their own membership gets the permission error, not
+// the conflict, and nothing is written.
+func TestMemberUsecaseDeleteSelfRemovalNeedsPermissionFirst(t *testing.T) {
+	stub := &memberRepositoryStub{}
+	err := NewMemberUsecase(stub).Delete(callerContext(), uuid.New(), uuid.New(), testCaller.MemberID)
+	if !errors.Is(err, domain.ErrMemberDeletePermission) {
+		t.Fatalf("error = %v, want ErrMemberDeletePermission", err)
+	}
+	if stub.deleteCalls != 0 {
+		t.Fatalf("repository delete reached without permission")
+	}
+}
+
+// TestMemberUsecaseDeleteOtherMemberPassesVerifiedCaller proves removing another member still
+// works with member:delete, and that the repository receives the verified caller so its
+// in-transaction self-target guard (by member id or user id) sees who is acting. Repository
+// errors, including the guard's own ErrMemberSelfRemoval for tokens without member_id, reach
+// the handler unchanged.
+func TestMemberUsecaseDeleteOtherMemberPassesVerifiedCaller(t *testing.T) {
+	tenantID, callerRoleID, memberID := uuid.New(), uuid.New(), uuid.New()
+	for _, repoErr := range []error{nil, domain.ErrMemberNotFound, domain.ErrMemberSelfRemoval, errors.New("pq: connection reset")} {
+		stub := &memberRepositoryStub{allowed: true, deleteErr: repoErr}
+		err := NewMemberUsecase(stub).Delete(callerContext(), tenantID, callerRoleID, memberID)
+		if repoErr == nil && err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if repoErr != nil && !errors.Is(err, repoErr) {
+			t.Fatalf("error = %v, want %v", err, repoErr)
+		}
+		if stub.deleteCalls != 1 || stub.deleteActor != testCaller || stub.deleteArgs != [2]uuid.UUID{tenantID, memberID} {
+			t.Fatalf("delete calls=%d actor=%+v args=%v", stub.deleteCalls, stub.deleteActor, stub.deleteArgs)
+		}
+	}
+}
+
+// TestMemberUsecaseDeleteLegacyTokenDelegatesSelfCheckToRepository covers a token without the
+// member_id claim: the usecase cannot tell the target from the claims alone, so it hands the
+// caller (user id only) to the repository, whose guard matches on user id.
+func TestMemberUsecaseDeleteLegacyTokenDelegatesSelfCheckToRepository(t *testing.T) {
+	legacy := domain.Caller{UserID: testCaller.UserID}
+	stub := &memberRepositoryStub{allowed: true, deleteErr: domain.ErrMemberSelfRemoval}
+	err := NewMemberUsecase(stub).Delete(domain.WithCaller(context.Background(), legacy), uuid.New(), uuid.New(), uuid.New())
+	if !errors.Is(err, domain.ErrMemberSelfRemoval) {
+		t.Fatalf("error = %v, want ErrMemberSelfRemoval", err)
+	}
+	if stub.deleteCalls != 1 || stub.deleteActor != legacy {
+		t.Fatalf("delete calls=%d actor=%+v, want the legacy caller", stub.deleteCalls, stub.deleteActor)
 	}
 }
 

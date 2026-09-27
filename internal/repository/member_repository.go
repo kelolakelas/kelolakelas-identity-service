@@ -31,17 +31,34 @@ func (r *memberRepository) GetByID(ctx context.Context, tenantID, memberID uuid.
 	return &domain.MemberResponse{ID: row.ID, UserID: row.UserID, TenantID: row.TenantID, Email: row.Email, FirstName: row.FirstName, LastName: row.LastName, Phone: row.Phone, Status: row.Status, Role: domain.MemberRoleResponse{ID: row.RoleID, Name: row.RoleName, IsSystemRole: row.IsSystemRole}, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}, nil
 }
 
-func (r *memberRepository) Delete(ctx context.Context, tenantID, memberID uuid.UUID) error {
-	result := r.db.WithContext(ctx).
-		Where("id = ? AND tenant_id = ?", memberID, tenantID).
-		Delete(&domain.TenantMember{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return domain.ErrMemberNotFound
-	}
-	return nil
+// Delete soft-deletes a tenant member inside one transaction. The guards run before the write,
+// so a rejected request leaves the membership in place:
+//   - the member must belong to the tenant and not be removed already (ErrMemberNotFound);
+//   - the actor may not remove their own membership (ErrMemberSelfRemoval, KEL-81).
+//
+// A concurrent removal of the same member between the lookup and the write affects no row and
+// is reported as ErrMemberNotFound too, so the second of two admins gets 404.
+func (r *memberRepository) Delete(ctx context.Context, tenantID, memberID uuid.UUID, actor domain.Caller) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var member domain.TenantMember
+		if err := tx.Where("id = ? AND tenant_id = ?", memberID, tenantID).First(&member).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return domain.ErrMemberNotFound
+			}
+			return err
+		}
+		if isOwnMembership(member, actor) {
+			return domain.ErrMemberSelfRemoval
+		}
+		result := tx.Where("id = ? AND tenant_id = ?", memberID, tenantID).Delete(&domain.TenantMember{})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return domain.ErrMemberNotFound
+		}
+		return nil
+	})
 }
 
 // UpdateRole moves a tenant member to another role inside one transaction. Every guard runs

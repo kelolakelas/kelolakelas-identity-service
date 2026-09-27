@@ -52,6 +52,11 @@ func (u *memberUsecase) UpdateRole(ctx context.Context, tenantID, callerRoleID, 
 	return u.repo.UpdateRole(ctx, tenantID, memberID, roleID, caller)
 }
 
+// Delete removes a member from the tenant. member:delete is checked first (KEL-76), so a caller
+// without it learns nothing about the target. The caller's own membership is then refused
+// (ErrMemberSelfRemoval, KEL-81): a token pinned to the target membership is rejected here
+// without reaching the repository, and the repository repeats the check inside its
+// transaction by member id and user id, which also covers tokens issued without member_id.
 func (u *memberUsecase) Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error {
 	allowed, err := callerHasPermission(ctx, u.repo, tenantID, callerRoleID, "member:delete")
 	if err != nil {
@@ -60,7 +65,12 @@ func (u *memberUsecase) Delete(ctx context.Context, tenantID, callerRoleID, memb
 	if !allowed {
 		return domain.ErrMemberDeletePermission
 	}
-	return u.repo.Delete(ctx, tenantID, memberID)
+	// callerHasPermission only allows a request that carries a verified caller.
+	caller, _ := domain.CallerFromContext(ctx)
+	if caller.MemberID != uuid.Nil && caller.MemberID == memberID {
+		return domain.ErrMemberSelfRemoval
+	}
+	return u.repo.Delete(ctx, tenantID, memberID, caller)
 }
 
 func (u *memberUsecase) ListTutors(ctx context.Context, tenantID uuid.UUID, query domain.TutorQuery) (*domain.TutorListResponse, error) {
