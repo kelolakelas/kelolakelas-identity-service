@@ -26,8 +26,8 @@ func NewInvitationHandler(invitationUsecase usecase.InvitationUsecase, authUseca
 }
 
 type CreateInvitationPayload struct {
-	RoleID uuid.UUID `json:"role_id" binding:"required"`
-	Email  string    `json:"email" binding:"required,email"`
+	RoleID uuid.UUID           `json:"role_id" binding:"required"`
+	Email  domain.EmailAddress `json:"email" binding:"required,email" swaggertype:"string"`
 }
 
 // InvitationResponse intentionally never serializes the bearer token.
@@ -115,7 +115,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		return
 	}
 
-	invitation, err := h.invitationUsecase.CreateInvitation(c.Request.Context(), tenantID, extractCallerRoleID(c), payload.RoleID, payload.Email)
+	invitation, err := h.invitationUsecase.CreateInvitation(c.Request.Context(), tenantID, extractCallerRoleID(c), payload.RoleID, payload.Email.String())
 	if err != nil {
 		if errors.Is(err, domain.ErrCreatorGrantForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Creator role requires platform approval", "data": nil})

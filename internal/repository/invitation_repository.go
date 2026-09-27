@@ -38,7 +38,7 @@ func (r *invitationRepository) GetByToken(ctx context.Context, token string) (*d
 
 func (r *invitationRepository) GetByTenantAndEmail(ctx context.Context, tenantID uuid.UUID, email string) (*domain.TenantInvitation, error) {
 	var invitation domain.TenantInvitation
-	if err := r.db.WithContext(ctx).Where("tenant_id = ? AND email = ? AND is_used = ?", tenantID, email, false).First(&invitation).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("tenant_id = ? AND LOWER(email) = ? AND is_used = ?", tenantID, domain.NormalizeEmail(email), false).First(&invitation).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrInvitationNotFound
 		}
@@ -54,13 +54,14 @@ func (r *invitationRepository) Update(ctx context.Context, invitation *domain.Te
 // ReplaceActive serializes invitations for a tenant via its parent row. This also
 // closes the gap where two concurrent requests both see no active invitation.
 func (r *invitationRepository) ReplaceActive(ctx context.Context, invitation *domain.TenantInvitation) error {
+	invitation.Email = domain.NormalizeEmail(invitation.Email)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var tenant domain.Tenant
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&tenant, "id = ?", invitation.TenantID).Error; err != nil {
 			return err
 		}
 		if err := tx.Model(&domain.TenantInvitation{}).
-			Where("tenant_id = ? AND LOWER(email) = LOWER(?) AND is_used = ?", invitation.TenantID, invitation.Email, false).
+			Where("tenant_id = ? AND LOWER(email) = ? AND is_used = ?", invitation.TenantID, invitation.Email, false).
 			Updates(map[string]interface{}{"is_used": true, "updated_at": time.Now()}).Error; err != nil {
 			return err
 		}

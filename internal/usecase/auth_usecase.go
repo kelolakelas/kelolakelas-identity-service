@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -66,10 +65,15 @@ func (u *authUsecase) WithPasswordReset(store domain.PasswordResetRepository, se
 }
 
 func (u *authUsecase) Register(ctx context.Context, user *domain.User, password string) (*domain.User, error) {
-	// Check if user already exists
+	user.Email = domain.NormalizeEmail(user.Email)
+	// Advisory check for a clear 409; the case-insensitive unique index still
+	// decides a concurrent race, and Create maps that to ErrUserAlreadyExists.
 	existing, err := u.userRepo.GetByEmail(ctx, user.Email)
 	if err == nil && existing != nil {
 		return nil, domain.ErrUserAlreadyExists
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
 	}
 
 	// Hash password
@@ -102,7 +106,7 @@ func resetTokenHash(token string) string {
 }
 
 func (u *authUsecase) RequestPasswordReset(ctx context.Context, email string) error {
-	user, err := u.userRepo.GetByEmail(ctx, strings.ToLower(strings.TrimSpace(email)))
+	user, err := u.userRepo.GetByEmail(ctx, domain.NormalizeEmail(email))
 	if errors.Is(err, domain.ErrUserNotFound) {
 		return nil
 	}
@@ -138,6 +142,7 @@ func (u *authUsecase) ConfirmPasswordReset(ctx context.Context, token, password 
 }
 
 func (u *authUsecase) Login(ctx context.Context, email, password string) (string, *domain.User, uuid.UUID, error) {
+	email = domain.NormalizeEmail(email)
 	var user *domain.User
 	var err error
 	if u.loginStore != nil {

@@ -25,7 +25,7 @@ func (h *PlatformHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid login payload", "data": nil})
 		return
 	}
-	token, err := h.auth.Login(c.Request.Context(), payload.Email, payload.Password)
+	token, err := h.auth.Login(c.Request.Context(), payload.Email.String(), payload.Password)
 	if errors.Is(err, domain.ErrInvalidCredentials) || errors.Is(err, usecase.ErrPlatformForbidden) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "Invalid credentials", "data": nil})
 		return

@@ -22,21 +22,21 @@ func NewAuthHandler(authUsecase domain.AuthUsecase, tenantUsecase domain.TenantU
 }
 
 type RegisterPayload struct {
-	Email     string  `json:"email" binding:"required,email"`
-	Password  string  `json:"password" binding:"required,min=6"`
-	FirstName string  `json:"first_name" binding:"required,max=255"`
-	LastName  string  `json:"last_name" binding:"required,max=255"`
-	Phone     *string `json:"phone" binding:"omitempty,max=50"`
-	IsParent  bool    `json:"is_parent"`
+	Email     domain.EmailAddress `json:"email" binding:"required,email" swaggertype:"string"`
+	Password  string              `json:"password" binding:"required,min=6"`
+	FirstName string              `json:"first_name" binding:"required,max=255"`
+	LastName  string              `json:"last_name" binding:"required,max=255"`
+	Phone     *string             `json:"phone" binding:"omitempty,max=50"`
+	IsParent  bool                `json:"is_parent"`
 }
 
 type LoginPayload struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email    domain.EmailAddress `json:"email" binding:"required,email" swaggertype:"string"`
+	Password string              `json:"password" binding:"required"`
 }
 
 type ResetRequestPayload struct {
-	Email string `json:"email" binding:"required,email"`
+	Email domain.EmailAddress `json:"email" binding:"required,email" swaggertype:"string"`
 }
 
 type ResetConfirmPayload struct {
@@ -59,7 +59,7 @@ func (h *AuthHandler) RequestPasswordReset(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid email", "data": nil})
 		return
 	}
-	if err := h.authUsecase.RequestPasswordReset(c.Request.Context(), payload.Email); err != nil {
+	if err := h.authUsecase.RequestPasswordReset(c.Request.Context(), payload.Email.String()); err != nil {
 		slog.ErrorContext(c.Request.Context(), "password reset request failed", "error", err)
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "If the email is registered, a reset link will be sent", "data": nil})
@@ -122,7 +122,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	user := &domain.User{
-		Email:     payload.Email,
+		Email:     payload.Email.String(),
 		FirstName: payload.FirstName,
 		LastName:  payload.LastName,
 		Phone:     payload.Phone,
@@ -177,7 +177,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, user, tenantID, err := h.authUsecase.Login(c.Request.Context(), payload.Email, payload.Password)
+	token, user, tenantID, err := h.authUsecase.Login(c.Request.Context(), payload.Email.String(), payload.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{
