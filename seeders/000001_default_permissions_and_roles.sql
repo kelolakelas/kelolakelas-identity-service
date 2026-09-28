@@ -43,6 +43,7 @@ VALUES
     (gen_random_uuid(), 'report:delete', 'Menghapus laporan evaluasi/nilai siswa'),
     (gen_random_uuid(), 'billing:read', 'Melihat saldo wallet dan riwayat transaksi/mutasi'),
     (gen_random_uuid(), 'billing:withdraw', 'Melakukan penarikan saldo/dana bimbel'),
+    (gen_random_uuid(), 'chat:manage', 'Menangani chat tenant dengan orang tua dan pengajar'),
     (gen_random_uuid(), 'voucher:create', 'Membuat kode voucher diskon baru'),
     (gen_random_uuid(), 'voucher:read', 'Melihat daftar voucher diskon'),
     (gen_random_uuid(), 'voucher:update', 'Mengubah informasi/status voucher diskon'),
