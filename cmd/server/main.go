@@ -179,6 +179,7 @@ func main() {
 			protected.POST("/creator-requests", creatorRequestHandler.Create)
 			protected.GET("/creator-requests", creatorRequestHandler.List)
 			protected.GET("/members", memberHandler.ListMembers)
+			protected.GET("/members/me/membership", memberHandler.GetMyMembership)
 			protected.GET("/tutors", memberHandler.ListTutors)
 			protected.GET("/members/:id", memberHandler.GetMember)
 			protected.PUT("/members/:id/role", memberHandler.UpdateMemberRole)

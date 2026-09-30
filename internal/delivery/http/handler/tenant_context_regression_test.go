@@ -67,6 +67,12 @@ func (m *recordingMemberUsecase) ListTutors(_ context.Context, tenantID uuid.UUI
 	return &domain.TutorListResponse{Items: []domain.TutorResponse{}}, nil
 }
 
+func (m *recordingMemberUsecase) FetchMyMembership(_ context.Context, tenantID, _ uuid.UUID) (*domain.MyMembershipResponse, error) {
+	m.calls++
+	m.tenant = tenantID
+	return &domain.MyMembershipResponse{}, nil
+}
+
 // recordingRoleUsecase mirrors recordingMemberUsecase for the role endpoints.
 type recordingRoleUsecase struct {
 	calls  int

@@ -86,3 +86,33 @@ func (u *memberUsecase) ListTutors(ctx context.Context, tenantID uuid.UUID, quer
 	}
 	return &domain.TutorListResponse{Items: items, Pagination: domain.Pagination{Page: query.Page, PageSize: query.PageSize, TotalItems: total, TotalPages: int(math.Ceil(float64(total) / float64(query.PageSize)))}}, nil
 }
+
+// FetchMyMembership answers the caller's own role and permission names in tenantID (KEL-136).
+//
+// The tenant, role, and caller come from the verified token (the handler passes the tenant and
+// role claims; the request context carries the Caller), and the answer is read from the live
+// membership row: the membership must be active, belong to the tenant, and still carry the
+// token's role, exactly like a permission check (KEL-76). A request without a verified caller
+// is ErrMembershipInactive, and the token's role_id claim is required because the repository
+// scopes the lookup by it, so a caller moved to another role cannot read the new role's
+// permissions with an old token.
+func (u *memberUsecase) FetchMyMembership(ctx context.Context, tenantID, callerRoleID uuid.UUID) (*domain.MyMembershipResponse, error) {
+	caller, ok := domain.CallerFromContext(ctx)
+	if !ok || caller.UserID == uuid.Nil || callerRoleID == uuid.Nil {
+		return nil, domain.ErrMembershipInactive
+	}
+	membership, err := u.repo.FindActiveMembership(ctx, tenantID, callerRoleID, caller.MemberID, caller.UserID)
+	if err != nil {
+		return nil, err
+	}
+	permissions := membership.PermissionNames
+	if permissions == nil {
+		permissions = []string{}
+	}
+	return &domain.MyMembershipResponse{
+		MemberID:    membership.MemberID,
+		RoleID:      membership.RoleID,
+		RoleName:    membership.RoleName,
+		Permissions: permissions,
+	}, nil
+}

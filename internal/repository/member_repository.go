@@ -130,6 +130,12 @@ func (r *memberRepository) HasActiveMemberPermission(ctx context.Context, query 
 	return ActiveMemberHasPermission(ctx, r.db, query)
 }
 
+// FindActiveMembership describes the caller's own active membership (KEL-136).
+// See repository.FindActiveMembership for the scoping rules.
+func (r *memberRepository) FindActiveMembership(ctx context.Context, tenantID, roleID, memberID, userID uuid.UUID) (*domain.ActiveMembership, error) {
+	return FindActiveMembership(ctx, r.db, tenantID, roleID, memberID, userID)
+}
+
 func (r *memberRepository) ListTutors(ctx context.Context, tenantID uuid.UUID, query domain.TutorQuery) ([]domain.TutorResponse, int64, error) {
 	db := r.db.WithContext(ctx).Table("tenant_members tm").
 		Joins("JOIN users u ON u.id = tm.user_id").Joins("JOIN roles ro ON ro.id = tm.role_id").

@@ -15,6 +15,11 @@ var (
 	ErrRoleAssignedToActiveMembers = errors.New("cannot delete role because it is currently assigned to active members")
 	ErrPermissionDenied            = errors.New("permission denied")
 	ErrCreatorGrantForbidden       = errors.New("creator role requires platform approval")
+	// ErrMembershipInactive reports that the caller's membership in the tenant is
+	// not active (removed, deactivated, or moved off the token's role). KEL-136's
+	// membership read must fail closed on that state instead of answering stale
+	// role data from the token claims.
+	ErrMembershipInactive = errors.New("membership is not active")
 )
 
 type Permission struct {
@@ -77,4 +82,15 @@ type RoleResponse struct {
 	Description  string               `json:"description,omitempty"`
 	IsSystemRole bool                 `json:"is_system_role"`
 	Permissions  []PermissionResponse `json:"permissions"`
+}
+
+// MyMembershipResponse answers "who am I in this tenant" (KEL-136). It carries the
+// role name the member footer shows and the permission names the sidebar filters
+// on, taken from the caller's active membership — never from the token claims,
+// which can outlive the membership they were minted for.
+type MyMembershipResponse struct {
+	MemberID    uuid.UUID `json:"member_id"`
+	RoleID      uuid.UUID `json:"role_id"`
+	RoleName    string    `json:"role_name"`
+	Permissions []string  `json:"permissions"`
 }

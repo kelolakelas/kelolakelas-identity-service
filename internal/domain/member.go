@@ -85,6 +85,18 @@ type UpdateMemberRoleRequest struct {
 	RoleID uuid.UUID `json:"role_id" binding:"required"`
 }
 
+// ActiveMembership is the caller's own membership row joined with the role it
+// currently carries. KEL-136 reads it to describe the caller in a tenant without
+// trusting the token claims: a membership that was removed, deactivated, or
+// moved to another role must stop being describable, exactly as it stops
+// authorizing anything (KEL-76).
+type ActiveMembership struct {
+	MemberID        uuid.UUID `json:"member_id"`
+	RoleID          uuid.UUID `json:"role_id"`
+	RoleName        string    `json:"role_name"`
+	PermissionNames []string  `json:"permissions"`
+}
+
 type MemberRepository interface {
 	List(ctx context.Context, tenantID uuid.UUID, query MemberQuery) ([]MemberResponse, int64, error)
 	GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*MemberResponse, error)
@@ -97,6 +109,10 @@ type MemberRepository interface {
 	// HasActiveMemberPermission grants a permission only through an active membership in the
 	// tenant that currently carries the role (KEL-76).
 	HasActiveMemberPermission(ctx context.Context, query MemberPermissionQuery) (bool, error)
+	// FindActiveMembership resolves the caller's own active membership with its role and
+	// permission names (KEL-136), or ErrMembershipInactive when the caller has no active
+	// membership in the tenant that still carries the token's role.
+	FindActiveMembership(ctx context.Context, tenantID, roleID, memberID, userID uuid.UUID) (*ActiveMembership, error)
 	ListTutors(ctx context.Context, tenantID uuid.UUID, query TutorQuery) ([]TutorResponse, int64, error)
 }
 
@@ -106,4 +122,9 @@ type MemberUsecase interface {
 	UpdateRole(ctx context.Context, tenantID, callerRoleID, memberID, roleID uuid.UUID) (*MemberResponse, error)
 	Delete(ctx context.Context, tenantID, callerRoleID, memberID uuid.UUID) error
 	ListTutors(ctx context.Context, tenantID uuid.UUID, query TutorQuery) (*TutorListResponse, error)
+	// FetchMyMembership describes the caller's own active membership in tenantID: role name
+	// and permission names for the tenant dashboard navigation (KEL-136). It reads the
+	// verified caller from the request context, so the answer follows the live membership
+	// row rather than the token claims.
+	FetchMyMembership(ctx context.Context, tenantID, callerRoleID uuid.UUID) (*MyMembershipResponse, error)
 }

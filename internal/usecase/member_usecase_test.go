@@ -27,6 +27,9 @@ type memberRepositoryStub struct {
 	deleteErr        error
 	deleteActor      domain.Caller
 	deleteArgs       [2]uuid.UUID
+	membership       *domain.ActiveMembership
+	membershipArgs   [4]uuid.UUID
+	membershipErr    error
 }
 
 func (s *memberRepositoryStub) List(_ context.Context, _ uuid.UUID, query domain.MemberQuery) ([]domain.MemberResponse, int64, error) {
@@ -63,6 +66,17 @@ func (s *memberRepositoryStub) HasActiveMemberPermission(_ context.Context, quer
 	s.permissionTenant = query.TenantID
 	s.permissionQuery = query
 	return s.allowed, s.err
+}
+
+func (s *memberRepositoryStub) FindActiveMembership(_ context.Context, tenantID, roleID, memberID, userID uuid.UUID) (*domain.ActiveMembership, error) {
+	s.membershipArgs = [4]uuid.UUID{tenantID, roleID, memberID, userID}
+	if s.membershipErr != nil {
+		return nil, s.membershipErr
+	}
+	if s.membership == nil {
+		return nil, domain.ErrMembershipInactive
+	}
+	return s.membership, nil
 }
 
 func (s *memberRepositoryStub) ListTutors(context.Context, uuid.UUID, domain.TutorQuery) ([]domain.TutorResponse, int64, error) {
