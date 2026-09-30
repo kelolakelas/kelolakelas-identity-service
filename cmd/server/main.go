@@ -229,6 +229,10 @@ func main() {
 	tenantGrpcServer := idgrpc.NewTenantServiceServer(db)
 	pb.RegisterTenantServiceServer(grpcServer, tenantGrpcServer)
 	idgrpc.RegisterPermissionServiceServer(grpcServer, tenantGrpcServer)
+	// KEL-135: academic validates a substitute tutor against the membership row
+	// before assigning sessions to them, so cross-tenant, inactive, or unknown
+	// member ids can never receive another tenant's sessions.
+	idgrpc.RegisterMembershipServiceServer(grpcServer, idgrpc.NewMembershipServer(db))
 	idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
 	idgrpc.RegisterFeePolicyServiceServer(grpcServer, idgrpc.NewFeePolicyServer(platformFeePolicy))
 
