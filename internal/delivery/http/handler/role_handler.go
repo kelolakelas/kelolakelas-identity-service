@@ -60,6 +60,52 @@ func (h *RoleHandler) GetPermissions(c *gin.Context) {
 	})
 }
 
+// GetMyMembership godoc
+// @Summary Get the caller's own membership, role, and permissions
+// @Description Return the role name and permission names of the caller's active membership in the tenant carried by the access token
+// @Description The tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored
+// @Description Parent and platform tokens are not served (403); an inactive membership is 403 as well
+// @Tags Members
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.HTTPResponse{data=domain.MyMembershipResponse}
+// @Failure 401 {object} domain.ErrorResponse
+// @Failure 403 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /api/v1/members/me/membership [get]
+func (h *MemberHandler) GetMyMembership(c *gin.Context) {
+	tenantID, err := tenantIDFromContext(c)
+	if err != nil {
+		writeTenantError(c, err)
+		return
+	}
+
+	membership, err := h.usecase.FetchMyMembership(c.Request.Context(), tenantID, extractCallerRoleID(c))
+	if err != nil {
+		if errors.Is(err, domain.ErrMembershipInactive) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status":  "error",
+				"message": "Active membership is required",
+				"data":    nil,
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch membership",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Membership fetched successfully",
+		"data":    membership,
+	})
+}
+
 // GetRoles godoc
 // @Summary Get tenant roles
 // @Description Fetch all custom and system roles for the tenant carried by the caller's access token

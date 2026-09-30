@@ -765,6 +765,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/members/me/membership": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Return the role name and permission names of the caller's active membership in the tenant carried by the access token\nThe tenant is resolved from the verified JWT claim only; any X-Tenant-ID header is ignored\nParent and platform tokens are not served (403); an inactive membership is 403 as well",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Members"
+                ],
+                "summary": "Get the caller's own membership, role, and permissions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MyMembershipResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/members/{id}": {
             "get": {
                 "security": [
@@ -3252,6 +3310,26 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.PermissionResponse"
                     }
+                }
+            }
+        },
+        "github_com_kelolakelas_kelolakelas-identity-service_internal_domain.MyMembershipResponse": {
+            "type": "object",
+            "properties": {
+                "member_id": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "role_id": {
+                    "type": "string"
+                },
+                "role_name": {
+                    "type": "string"
                 }
             }
         },
