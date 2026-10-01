@@ -236,6 +236,7 @@ func main() {
 	idgrpc.RegisterMembershipServiceServer(grpcServer, idgrpc.NewMembershipServer(db))
 	idgrpc.RegisterCatalogPolicyServiceServer(grpcServer, idgrpc.NewCatalogPolicyServer(publicCatalogPolicy))
 	idgrpc.RegisterFeePolicyServiceServer(grpcServer, idgrpc.NewFeePolicyServer(platformFeePolicy))
+	idgrpc.RegisterPlatformAdminServiceServer(grpcServer, idgrpc.NewPlatformAdminServer(platformAuth))
 
 	// The signal handler stays registered for the whole shutdown, so a second SIGTERM
 	// does not cut the drain short; the shutdown timeout still bounds the exit.
