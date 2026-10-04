@@ -212,7 +212,7 @@ func (r *memberRepository) List(ctx context.Context, tenantID uuid.UUID, query d
 
 	orderColumn := map[string]string{"created_at": "tm.joined_at", "joined_at": "tm.joined_at", "updated_at": "tm.updated_at", "email": "u.email", "name": "u.last_name"}[query.Sort]
 	if orderColumn == "" {
-		orderColumn = "tm.created_at"
+		orderColumn = "tm.joined_at"
 	}
 	orderDirection := "ASC"
 	if query.Order == "desc" {
@@ -221,7 +221,7 @@ func (r *memberRepository) List(ctx context.Context, tenantID uuid.UUID, query d
 
 	var rows []memberRow
 	if err := base.Select("tm.id, tm.user_id, tm.tenant_id, u.email, u.first_name, u.last_name, u.phone, CASE WHEN tm.is_active THEN 'active' ELSE 'inactive' END AS status, ro.id AS role_id, ro.name AS role_name, (ro.tenant_id IS NULL) AS is_system_role, tm.joined_at AS created_at, tm.updated_at").
-		Order(fmt.Sprintf("%s %s", orderColumn, orderDirection)).
+		Order(fmt.Sprintf("%s %s, tm.id %s", orderColumn, orderDirection, orderDirection)).
 		Limit(query.PageSize).Offset((query.Page - 1) * query.PageSize).Scan(&rows).Error; err != nil {
 		return nil, 0, err
 	}
