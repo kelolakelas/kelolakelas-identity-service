@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -70,9 +71,10 @@ func NewMemberHandler(usecase domain.MemberUsecase) *MemberHandler {
 // @Param search query string false "Search email or name"
 // @Param status query string false "active or inactive"
 // @Param role_id query string false "Role UUID"
-// @Param sort query string false "joined_at, updated_at, email, or name"
+// @Param sort query string false "joined_at, created_at, updated_at, email, or name"
 // @Param order query string false "asc or desc"
 // @Success 200 {object} domain.HTTPResponse{data=domain.MemberListResponse}
+// @Failure 400 {object} domain.ErrorResponse
 // @Failure 401 {object} domain.ErrorResponse
 // @Failure 403 {object} domain.ErrorResponse
 // @Failure 500 {object} domain.ErrorResponse
@@ -111,6 +113,19 @@ func (h *MemberHandler) ListMembers(c *gin.Context) {
 			return
 		}
 		query.RoleID = &roleID
+	}
+	// KEL-165: an empty sort is joined_at with the default asc direction, and
+	// an unknown sort is a 400 validation error rather than a database error.
+	// TrimSpace keeps " joined_at " working the same as "joined_at".
+	query.Sort = strings.TrimSpace(query.Sort)
+	if query.Sort == "" {
+		query.Sort = "joined_at"
+	}
+	switch query.Sort {
+	case "joined_at", "created_at", "updated_at", "email", "name":
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid sort", "data": nil})
+		return
 	}
 	result, err := h.usecase.List(c.Request.Context(), tenantID, query)
 	if err != nil {

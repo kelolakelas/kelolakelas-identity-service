@@ -714,7 +714,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "joined_at, updated_at, email, or name",
+                        "description": "joined_at, created_at, updated_at, email, or name",
                         "name": "sort",
                         "in": "query"
                     },
@@ -742,6 +742,12 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_kelolakelas_kelolakelas-identity-service_internal_domain.ErrorResponse"
                         }
                     },
                     "401": {
