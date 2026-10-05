@@ -145,6 +145,7 @@ func main() {
 		apiV1.POST("/platform/auth/challenge", platformHandler.StartFactor)
 		apiV1.POST("/platform/auth/verify", platformHandler.FinishFactor)
 		apiV1.POST("/tenants/register", authHandler.RegisterTenant)
+		apiV1.GET("/tenants/:id/public", handler.PublicTenantHandler(tenantUsecase, publicCatalogPolicy))
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
 		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)
 
