@@ -35,7 +35,7 @@ func (s *loginAttemptStore) Authenticate(ctx context.Context, email, password, d
 			return err
 		}
 
-		now := time.Now()
+		now := time.Now().UTC()
 		// Always do a bcrypt comparison, even while locked, to avoid a fast
 		// credential-dependent response path.
 		matches := hash.CheckPasswordHash(password, user.PasswordHash)

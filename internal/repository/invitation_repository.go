@@ -62,7 +62,7 @@ func (r *invitationRepository) ReplaceActive(ctx context.Context, invitation *do
 		}
 		if err := tx.Model(&domain.TenantInvitation{}).
 			Where("tenant_id = ? AND LOWER(email) = ? AND is_used = ?", invitation.TenantID, invitation.Email, false).
-			Updates(map[string]interface{}{"is_used": true, "updated_at": time.Now()}).Error; err != nil {
+			Updates(map[string]interface{}{"is_used": true, "updated_at": time.Now().UTC()}).Error; err != nil {
 			return err
 		}
 		return tx.Create(invitation).Error
@@ -79,7 +79,7 @@ func (r *invitationRepository) ListPending(ctx context.Context, tenantID uuid.UU
 func (r *invitationRepository) Revoke(ctx context.Context, tenantID, invitationID uuid.UUID) error {
 	result := r.db.WithContext(ctx).Model(&domain.TenantInvitation{}).
 		Where("id = ? AND tenant_id = ? AND is_used = ?", invitationID, tenantID, false).
-		Updates(map[string]interface{}{"is_used": true, "updated_at": time.Now()})
+		Updates(map[string]interface{}{"is_used": true, "updated_at": time.Now().UTC()})
 	if result.Error != nil {
 		return result.Error
 	}

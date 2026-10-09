@@ -79,7 +79,7 @@ func (r *rbacRepository) CreateRoleTx(ctx context.Context, role *domain.Role, pe
 			rp := domain.RolePermission{
 				RoleID:       role.ID,
 				PermissionID: permID,
-				AssignedAt:   time.Now(),
+				AssignedAt:   time.Now().UTC(),
 			}
 			if err := tx.Create(&rp).Error; err != nil {
 				return err
@@ -96,7 +96,7 @@ func (r *rbacRepository) UpdateRoleTx(ctx context.Context, roleID uuid.UUID, nam
 		if err := tx.Model(&domain.Role{}).Where("id = ?", roleID).Updates(map[string]interface{}{
 			"name":        name,
 			"description": description,
-			"updated_at":  time.Now(),
+			"updated_at":  time.Now().UTC(),
 		}).Error; err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func (r *rbacRepository) UpdateRoleTx(ctx context.Context, roleID uuid.UUID, nam
 			rp := domain.RolePermission{
 				RoleID:       roleID,
 				PermissionID: permID,
-				AssignedAt:   time.Now(),
+				AssignedAt:   time.Now().UTC(),
 			}
 			if err := tx.Create(&rp).Error; err != nil {
 				return err

@@ -234,7 +234,7 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 			return domain.ErrInvitationUsed
 		}
 
-		if time.Now().After(invitation.ExpiresAt) {
+		if time.Now().UTC().After(invitation.ExpiresAt) {
 			return domain.ErrInvitationExpired
 		}
 
@@ -316,7 +316,7 @@ func (r *userRepository) RegisterInvitedUserTx(ctx context.Context, token, first
 
 		// 5. Update Tenant_Invitations table set is_used = true
 		invitation.IsUsed = true
-		invitation.UpdatedAt = time.Now()
+		invitation.UpdatedAt = time.Now().UTC()
 		if err := tx.Save(&invitation).Error; err != nil {
 			return err
 		}

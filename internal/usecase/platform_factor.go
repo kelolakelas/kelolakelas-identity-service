@@ -65,7 +65,7 @@ func (a *PlatformAuth) StartFactor(ctx context.Context, pending string, purpose 
 			return "", "", err
 		}
 	}
-	if _, err = a.factor.Begin(ctx, claims.UserID, purpose, token, secret, time.Now().Add(5*time.Minute)); err != nil {
+	if _, err = a.factor.Begin(ctx, claims.UserID, purpose, token, secret, time.Now().UTC().Add(5*time.Minute)); err != nil {
 		return "", "", ErrPlatformUnavailable
 	}
 	return hex.EncodeToString(token), strings.TrimRight(base32.StdEncoding.EncodeToString(secret), "="), nil
@@ -82,7 +82,7 @@ func (a *PlatformAuth) FinishFactor(ctx context.Context, pending, challenge, cod
 	if err != nil || len(token) != 32 {
 		return "", ErrPlatformForbidden
 	}
-	accepted, version, err := a.factor.Consume(ctx, claims.UserID, purpose, token, time.Now(), func(secret []byte) (bool, error) { return checkFactor(secret, code, time.Now()) })
+	accepted, version, err := a.factor.Consume(ctx, claims.UserID, purpose, token, time.Now().UTC(), func(secret []byte) (bool, error) { return checkFactor(secret, code, time.Now().UTC()) })
 	if err != nil {
 		return "", ErrPlatformUnavailable
 	}
