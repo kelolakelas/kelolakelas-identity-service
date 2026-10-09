@@ -71,6 +71,7 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 
 	// 3. Generate invitation
 	token := uuid.New().String()
+	now := time.Now().UTC()
 	invitation := &domain.TenantInvitation{
 		ID:        uuid.New(),
 		TenantID:  tenantID,
@@ -78,9 +79,9 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 		Email:     emailAddr,
 		Token:     token,
 		IsUsed:    false,
-		ExpiresAt: time.Now().Add(48 * time.Hour),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ExpiresAt: now.Add(48 * time.Hour),
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	// 4. Insert into database

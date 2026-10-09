@@ -118,7 +118,7 @@ func (u *authUsecase) RequestPasswordReset(ctx context.Context, email string) er
 		return err
 	}
 	token := hex.EncodeToString(secret)
-	if err := u.resets.Issue(ctx, user.ID, resetTokenHash(token), time.Now().Add(u.resetTTL)); err != nil {
+	if err := u.resets.Issue(ctx, user.ID, resetTokenHash(token), time.Now().UTC().Add(u.resetTTL)); err != nil {
 		return err
 	}
 	if err := u.resetEmail.SendPasswordResetEmail(user.Email, token); err != nil {
@@ -138,7 +138,7 @@ func (u *authUsecase) ConfirmPasswordReset(ctx context.Context, token, password 
 	if err != nil {
 		return err
 	}
-	return u.resets.Consume(ctx, resetTokenHash(token), passwordHash, time.Now())
+	return u.resets.Consume(ctx, resetTokenHash(token), passwordHash, time.Now().UTC())
 }
 
 func (u *authUsecase) Login(ctx context.Context, email, password string) (string, *domain.User, uuid.UUID, error) {
