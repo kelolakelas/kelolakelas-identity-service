@@ -29,11 +29,11 @@ func TestCreatorDecisionRollbackOnAuthorizationReplayAndStaleTarget(t *testing.T
 			base, mock := newMemberRepositoryWithMock(t)
 			requestID, actorID, tenantID, targetID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 			mock.ExpectBegin()
-			admins := sqlmock.NewRows([]string{"id"})
+			admins := sqlmock.NewRows([]string{"user_id"})
 			if tc.admin {
 				admins.AddRow(uuid.New())
 			}
-			mock.ExpectQuery("SELECT id FROM platform_admin_assignments").WillReturnRows(admins)
+			mock.ExpectQuery("SELECT user_id FROM platform_admin_assignments").WillReturnRows(admins)
 			if tc.admin {
 				var target any
 				if tc.target {
@@ -61,7 +61,7 @@ func TestCreatorDecisionRejectAtomicAudit(t *testing.T) {
 	base, mock := newMemberRepositoryWithMock(t)
 	requestID, actorID, tenantID := uuid.New(), uuid.New(), uuid.New()
 	mock.ExpectBegin()
-	mock.ExpectQuery("SELECT id FROM platform_admin_assignments").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+	mock.ExpectQuery("SELECT user_id FROM platform_admin_assignments").WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(uuid.New()))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"creator_requests\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "tenant_id", "status", "target_email"}).AddRow(requestID, tenantID, "pending", "new@example.com"))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"tenants\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "name", "status"}).AddRow(tenantID, "School", "active"))
 	mock.ExpectExec("UPDATE \"creator_requests\"").WillReturnResult(sqlmock.NewResult(0, 1))

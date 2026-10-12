@@ -28,8 +28,9 @@ func (r *creatorDecisionRepository) Decide(ctx context.Context, requestID, actor
 	var tenantName string
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Lock the live admin assignment for the whole decision; revocation cannot race the grant.
+		// The table's primary key is user_id (000002_platform_admin); there is no id column.
 		var adminID string
-		if err := tx.Raw(`SELECT id FROM platform_admin_assignments WHERE user_id = ? AND is_active = true FOR SHARE`, actorID).Scan(&adminID).Error; err != nil {
+		if err := tx.Raw(`SELECT user_id FROM platform_admin_assignments WHERE user_id = ? AND is_active = true FOR SHARE`, actorID).Scan(&adminID).Error; err != nil {
 			return err
 		}
 		if adminID == "" {

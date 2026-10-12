@@ -24,7 +24,7 @@ func TestCreatorDecisionApproveExistingAndNewAccount(t *testing.T) {
 				target = targetID
 			}
 			mock.ExpectBegin()
-			mock.ExpectQuery("SELECT id FROM platform_admin_assignments").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+			mock.ExpectQuery("SELECT user_id FROM platform_admin_assignments").WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(uuid.New()))
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"creator_requests\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "tenant_id", "status", "target_email", "target_user_id"}).AddRow(requestID, tenantID, "pending", "new@example.com", target))
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"tenants\"")).WillReturnRows(sqlmock.NewRows([]string{"id", "name", "status"}).AddRow(tenantID, "School", "active"))
 			users := sqlmock.NewRows([]string{"id", "email", "is_parent"})
