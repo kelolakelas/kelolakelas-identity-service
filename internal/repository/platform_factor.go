@@ -172,10 +172,11 @@ func (s *platformFactorStore) Consume(ctx context.Context, id uuid.UUID, purpose
 			return tx.Model(&ch).Update("attempts", ch.Attempts+1).Error
 		}
 		if purpose == "enroll" {
-			if err := tx.Model(&a).Updates(map[string]any{"factor_secret": ch.PendingSecret, "enrollment_allowed": false, "factor_version": a.FactorVersion + 1}).Error; err != nil {
+			next := a.FactorVersion + 1
+			if err := tx.Model(&a).Updates(map[string]any{"factor_secret": ch.PendingSecret, "enrollment_allowed": false, "factor_version": next}).Error; err != nil {
 				return err
 			}
-			version = a.FactorVersion + 1
+			version = next
 		} else {
 			version = a.FactorVersion
 		}
