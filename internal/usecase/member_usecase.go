@@ -19,6 +19,10 @@ func NewMemberUsecase(repo repository.MemberRepository) domain.MemberUsecase {
 }
 
 func (u *memberUsecase) List(ctx context.Context, tenantID uuid.UUID, query domain.MemberQuery) (*domain.MemberListResponse, error) {
+	caller, _ := domain.CallerFromContext(ctx)
+	if err := requirePermission(ctx, u.repo, tenantID, caller.RoleID, "member:read"); err != nil {
+		return nil, err
+	}
 	if query.Page < 1 {
 		query.Page = 1
 	}
@@ -36,6 +40,10 @@ func (u *memberUsecase) List(ctx context.Context, tenantID uuid.UUID, query doma
 }
 
 func (u *memberUsecase) GetByID(ctx context.Context, tenantID, memberID uuid.UUID) (*domain.MemberResponse, error) {
+	caller, _ := domain.CallerFromContext(ctx)
+	if err := requirePermission(ctx, u.repo, tenantID, caller.RoleID, "member:read"); err != nil {
+		return nil, err
+	}
 	return u.repo.GetByID(ctx, tenantID, memberID)
 }
 

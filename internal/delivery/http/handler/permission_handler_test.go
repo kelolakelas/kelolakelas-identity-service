@@ -67,6 +67,10 @@ func (*permissionDeniedTenantUsecase) RegisterTenant(context.Context, *domain.Re
 	return nil, nil
 }
 
+func (*permissionDeniedTenantUsecase) GetTenantSettings(context.Context, uuid.UUID) (*domain.Tenant, error) {
+	return nil, domain.ErrPermissionDenied
+}
+
 func (*permissionDeniedTenantUsecase) GetTenantByID(context.Context, uuid.UUID) (*domain.Tenant, error) {
 	return nil, nil
 }

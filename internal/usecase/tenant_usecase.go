@@ -188,6 +188,15 @@ func (u *tenantUsecase) RegisterTenant(ctx context.Context, req *domain.Register
 	}, nil
 }
 
+// GetTenantSettings guards the protected settings read without changing the public profile reader.
+func (u *tenantUsecase) GetTenantSettings(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
+	caller, _ := domain.CallerFromContext(ctx)
+	if err := requirePermission(ctx, u.permissions, id, caller.RoleID, "tenant:read"); err != nil {
+		return nil, err
+	}
+	return u.tenantRepo.GetByID(ctx, id)
+}
+
 func (u *tenantUsecase) GetTenantByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
 	return u.tenantRepo.GetByID(ctx, id)
 }

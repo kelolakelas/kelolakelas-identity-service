@@ -36,6 +36,10 @@ func (u *roleUsecase) FetchAllPermissions(ctx context.Context) ([]domain.Permiss
 }
 
 func (u *roleUsecase) FetchTenantRoles(ctx context.Context, tenantID uuid.UUID) ([]domain.RoleResponse, error) {
+	caller, _ := domain.CallerFromContext(ctx)
+	if err := requirePermission(ctx, u.permissions, tenantID, caller.RoleID, "role:read"); err != nil {
+		return nil, err
+	}
 	roles, err := u.rbacRepo.GetRolesByTenantID(ctx, tenantID)
 	if err != nil {
 		return nil, err

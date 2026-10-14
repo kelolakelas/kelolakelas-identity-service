@@ -118,6 +118,10 @@ func (*recordingTenantUsecase) RegisterTenant(context.Context, *domain.RegisterT
 	return &domain.RegisterTenantResponse{}, nil
 }
 
+func (u *recordingTenantUsecase) GetTenantSettings(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
+	return u.GetTenantByID(ctx, id)
+}
+
 func (u *recordingTenantUsecase) GetTenantByID(_ context.Context, id uuid.UUID) (*domain.Tenant, error) {
 	u.calls++
 	u.tenant = id
