@@ -246,11 +246,11 @@ func TestMemberUsecaseList(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			stub := &memberRepositoryStub{total: test.total}
+			stub := &memberRepositoryStub{total: test.total, allowed: true}
 			if test.expectError {
 				stub.err = errors.New("database unavailable")
 			}
-			result, err := NewMemberUsecase(stub).List(context.Background(), uuid.New(), test.query)
+			result, err := NewMemberUsecase(stub).List(domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), RoleID: uuid.New()}), uuid.New(), test.query)
 			if test.expectError {
 				if err == nil {
 					t.Fatal("expected error")

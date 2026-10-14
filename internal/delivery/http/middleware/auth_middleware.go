@@ -62,7 +62,7 @@ func AuthMiddleware(jwtService *jwt.JWTService) gin.HandlerFunc {
 		// Permission checks require the token's user (and membership, when the token carries
 		// the member_id claim) to still hold an active membership with the token's role
 		// (KEL-76), so the verified caller travels with the request context to the usecases.
-		c.Request = c.Request.WithContext(domain.WithCaller(c.Request.Context(), domain.Caller{UserID: claims.UserID, MemberID: claims.MemberID}))
+		c.Request = c.Request.WithContext(domain.WithCaller(c.Request.Context(), domain.Caller{UserID: claims.UserID, MemberID: claims.MemberID, RoleID: claims.RoleID}))
 
 		c.Next()
 	}

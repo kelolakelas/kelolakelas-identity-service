@@ -128,6 +128,10 @@ func (h *MemberHandler) ListMembers(c *gin.Context) {
 		return
 	}
 	result, err := h.usecase.List(c.Request.Context(), tenantID, query)
+	if errors.Is(err, domain.ErrPermissionDenied) {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to fetch members", "data": nil})
 		return
@@ -160,6 +164,10 @@ func (h *MemberHandler) GetMember(c *gin.Context) {
 		return
 	}
 	member, err := h.usecase.GetByID(c.Request.Context(), tenantID, memberID)
+	if errors.Is(err, domain.ErrPermissionDenied) {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		return
+	}
 	if errors.Is(err, domain.ErrMemberNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Member not found", "data": nil})
 		return

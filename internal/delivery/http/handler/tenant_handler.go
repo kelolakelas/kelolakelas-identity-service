@@ -45,7 +45,11 @@ func (h *TenantHandler) GetSettings(c *gin.Context) {
 	if !ok {
 		return
 	}
-	tenant, err := h.usecase.GetTenantByID(c.Request.Context(), tenantID)
+	tenant, err := h.usecase.GetTenantSettings(c.Request.Context(), tenantID)
+	if errors.Is(err, domain.ErrPermissionDenied) {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		return
+	}
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -111,6 +115,14 @@ func (h *TenantHandler) UpdateSettings(c *gin.Context) {
 func (h *TenantHandler) GetLocation(c *gin.Context) {
 	tenantID, ok := h.currentTenant(c)
 	if !ok {
+		return
+	}
+	if _, err := h.usecase.GetTenantSettings(c.Request.Context(), tenantID); err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, domain.ErrPermissionDenied) {
+			status = http.StatusForbidden
+		}
+		c.JSON(status, gin.H{"status": "error", "message": "Tenant settings unavailable", "data": nil})
 		return
 	}
 	location, err := h.usecase.GetTenantLocation(c.Request.Context(), tenantID)

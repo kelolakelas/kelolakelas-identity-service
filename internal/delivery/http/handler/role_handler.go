@@ -127,6 +127,10 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 	}
 
 	roles, err := h.roleUsecase.FetchTenantRoles(c.Request.Context(), tenantID)
+	if errors.Is(err, domain.ErrPermissionDenied) {
+		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Permission denied", "data": nil})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",

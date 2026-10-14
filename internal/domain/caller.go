@@ -11,6 +11,7 @@ import (
 // active membership (KEL-76): a token outlives the membership it was minted for, so the
 // tenant and role claims alone are not enough.
 type Caller struct {
+	RoleID uuid.UUID
 	UserID uuid.UUID
 	// MemberID is the tenant_members row the token was minted for. It is uuid.Nil for tokens
 	// issued without the member_id claim; those are matched by (tenant, user, role) instead.
