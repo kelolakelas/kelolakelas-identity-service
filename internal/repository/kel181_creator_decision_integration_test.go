@@ -354,6 +354,45 @@ func TestKEL181CreatorDecisionPostgres(t *testing.T) {
 		}
 	})
 
+	// KEL-212: a deleted membership still occupies the unique tenant/user key.
+	// Neither deleted nor inactive rows may be recreated or upgraded on approval.
+	for _, deleted := range []bool{true, false} {
+		name := "inactive membership stale"
+		if deleted {
+			name = "soft-deleted membership stale"
+		}
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t)
+			actor := admin(t, f, true)
+			tenantID := tenant(t, f, "active")
+			requester, _ := user(t, f, false)
+			target, email := user(t, f, false)
+			memberID := uuid.New()
+			if err := db.Exec("INSERT INTO tenant_members(id,tenant_id,user_id,role_id,is_active,deleted_at) VALUES (?,?,?,?,?,CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END)", memberID, tenantID, target, creatorRoleID, deleted, deleted).Error; err != nil {
+				t.Fatal(err)
+			}
+			requestID := request(t, f, tenantID, requester, email, &target)
+			if _, err := decide(actor, requestID, true, ""); !errors.Is(err, domain.ErrCreatorRequestStale) {
+				t.Fatalf("err=%v want ErrCreatorRequestStale", err)
+			}
+			if state := loadRequest(t, requestID); state.Status != "pending" || state.DecidedBy != nil || state.InvitationID != nil {
+				t.Fatalf("state=%+v", state)
+			}
+			if n := count(t, "SELECT COUNT(*) FROM tenant_members WHERE tenant_id = ? AND user_id = ?", tenantID, target); n != 1 {
+				t.Fatalf("members=%d want original row only", n)
+			}
+			if n := count(t, "SELECT COUNT(*) FROM tenant_members WHERE id = ? AND role_id = ? AND is_active = ? AND (deleted_at IS NOT NULL) = ?", memberID, creatorRoleID, deleted, deleted); n != 1 {
+				t.Fatal("original membership changed")
+			}
+			if n := count(t, "SELECT COUNT(*) FROM creator_request_audit WHERE request_id = ?", requestID); n != 0 {
+				t.Fatalf("audit rows=%d", n)
+			}
+			if n := count(t, "SELECT COUNT(*) FROM tenant_invitations WHERE tenant_id = ?", tenantID); n != 0 {
+				t.Fatalf("invitations=%d", n)
+			}
+		})
+	}
+
 	t.Run("inactive tenant stale", func(t *testing.T) {
 		f := newFixture(t)
 		actor := admin(t, f, true)

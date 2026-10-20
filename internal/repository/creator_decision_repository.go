@@ -78,7 +78,8 @@ func (r *creatorDecisionRepository) Decide(ctx context.Context, requestID, actor
 					return err
 				}
 				var member domain.TenantMember
-				err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("tenant_id = ? AND user_id = ?", request.TenantID, user.ID).First(&member).Error
+				// Deleted rows still occupy the unique tenant/user key and must be rejected as stale.
+				err := tx.Unscoped().Clauses(clause.Locking{Strength: "UPDATE"}).Where("tenant_id = ? AND user_id = ?", request.TenantID, user.ID).First(&member).Error
 				switch {
 				case errors.Is(err, gorm.ErrRecordNotFound):
 					member = domain.TenantMember{ID: uuid.New(), TenantID: request.TenantID, UserID: user.ID, RoleID: role.ID, IsActive: true}
