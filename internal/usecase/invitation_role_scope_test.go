@@ -255,3 +255,7 @@ func TestCreateInvitationStillRequiresPermission(t *testing.T) {
 		t.Fatalf("error = %v, want permission denied", err)
 	}
 }
+
+func (*invitationRoleScopeInvitationStub) ValidateExistingTeacher(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error {
+	return domain.ErrUserAlreadyExists
+}

@@ -51,8 +51,8 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 		return nil, err
 	}
 
-	// Registration via invitation creates a new account; any existing account
-	// would be unable to redeem the token. Do not send an unusable invitation.
+	// Existing system Teachers use authenticated acceptance; all other existing
+	// personas and role conversions remain outside invitation registration.
 	// The invitation is stored and matched in canonical form (KEL-89).
 	emailAddr = domain.NormalizeEmail(emailAddr)
 	user, err := u.userRepo.GetByEmail(ctx, emailAddr)
@@ -60,7 +60,9 @@ func (u *invitationUsecase) CreateInvitation(ctx context.Context, tenantID, call
 		return nil, err
 	}
 	if user != nil {
-		return nil, domain.ErrUserAlreadyExists
+		if err := u.invitationRepo.ValidateExistingTeacher(ctx, tenantID, roleID, user.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	// 2. Fetch tenant to get tenant name
@@ -160,5 +162,20 @@ func (u *invitationUsecase) VerifyInvitation(ctx context.Context, token string) 
 		return nil, domain.ErrInvitationExpired
 	}
 
+	if tenant, err := u.tenantRepo.GetByID(ctx, invitation.TenantID); err != nil {
+		return nil, err
+	} else if tenant != nil {
+		invitation.TenantName = tenant.Name
+	}
+	if role, err := u.rbacRepo.GetRoleByID(ctx, invitation.RoleID); err != nil {
+		return nil, err
+	} else if role != nil {
+		invitation.RoleName = role.Name
+	}
+	user, err := u.userRepo.GetByEmail(ctx, invitation.Email)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
+	}
+	invitation.ExistingAccount = user != nil
 	return invitation, nil
 }

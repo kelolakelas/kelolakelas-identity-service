@@ -39,6 +39,7 @@ type TenantMemberRepository interface {
 type MemberRepository = domain.MemberRepository
 
 type InvitationRepository interface {
+	ValidateExistingTeacher(ctx context.Context, tenantID, roleID, userID uuid.UUID) error
 	Create(ctx context.Context, invitation *domain.TenantInvitation) error
 	GetByToken(ctx context.Context, token string) (*domain.TenantInvitation, error)
 	GetByTenantAndEmail(ctx context.Context, tenantID uuid.UUID, email string) (*domain.TenantInvitation, error)

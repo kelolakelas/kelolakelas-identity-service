@@ -127,3 +127,7 @@ func TestCreateInvitationRejectsExistingAccountWithoutEmail(t *testing.T) {
 		t.Fatalf("existing user: %v emails=%d invitations=%d", err, mail.calls, len(repo.invitations))
 	}
 }
+
+func (*lifecycleInvitationRepo) ValidateExistingTeacher(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error {
+	return domain.ErrUserAlreadyExists
+}
