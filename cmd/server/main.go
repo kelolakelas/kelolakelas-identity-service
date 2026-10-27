@@ -108,6 +108,7 @@ func main() {
 	memberUsecase := usecase.NewMemberUsecase(memberRepo)
 
 	authHandler := handler.NewAuthHandler(authUsecase, tenantUsecase)
+	tenantSessionHandler := handler.NewTenantSessionHandler(usecase.NewTenantSessions(repository.NewTenantSessionRepository(db), jwtService))
 	invitationHandler := handler.NewInvitationHandler(invitationUsecase, authUsecase)
 	roleHandler := handler.NewRoleHandler(roleUsecase)
 	memberHandler := handler.NewMemberHandler(memberUsecase)
@@ -138,6 +139,8 @@ func main() {
 		// Public Auth & Invitation routes
 		apiV1.POST("/auth/register", authHandler.Register)
 		apiV1.POST("/auth/login", authHandler.Login)
+		apiV1.GET("/auth/memberships", tenantSessionHandler.List)
+		apiV1.POST("/auth/tenant", tenantSessionHandler.Switch)
 		apiV1.POST("/auth/password-reset/request", authHandler.RequestPasswordReset)
 		apiV1.POST("/auth/password-reset/confirm", authHandler.ConfirmPasswordReset)
 		apiV1.GET("/internal/session/check", handler.SessionCheck(jwtService, resetStore, platformAuth))
