@@ -163,11 +163,16 @@ func (u *authUsecase) Login(ctx context.Context, email, password string) (string
 
 	// Find active tenant member
 	var tenantID, roleID, memberID uuid.UUID
-	member, err := u.userRepo.GetTenantMemberByUserID(ctx, user.ID)
-	if err == nil && member != nil {
-		tenantID = member.TenantID
-		roleID = member.RoleID
-		memberID = member.ID
+	if !user.IsParent {
+		member, err := u.userRepo.GetTenantMemberByUserID(ctx, user.ID)
+		if err != nil {
+			return "", nil, uuid.Nil, err
+		}
+		if member != nil {
+			tenantID = member.TenantID
+			roleID = member.RoleID
+			memberID = member.ID
+		}
 	}
 
 	// Read the committed boundary before issuing any new session. A failed read

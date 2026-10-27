@@ -51,7 +51,7 @@ func (s *caseFoldUsers) Create(_ context.Context, user *domain.User) error {
 }
 
 func (s *caseFoldUsers) GetTenantMemberByUserID(context.Context, uuid.UUID) (*domain.TenantMember, error) {
-	return nil, domain.ErrUserNotFound
+	return nil, nil
 }
 
 func (s *caseFoldUsers) SessionValidAfter(context.Context, uuid.UUID) (*time.Time, error) {

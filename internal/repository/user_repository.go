@@ -208,7 +208,13 @@ func (r *userRepository) GetPermissionsByRoleId(ctx context.Context, roleID uuid
 
 func (r *userRepository) GetTenantMemberByUserID(ctx context.Context, userID uuid.UUID) (*domain.TenantMember, error) {
 	var member domain.TenantMember
-	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_active = ?", userID, true).First(&member).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("tenant_members").Select("tenant_members.*").
+		Joins("JOIN tenants t ON t.id = tenant_members.tenant_id").
+		Joins("JOIN roles ro ON ro.id = tenant_members.role_id").
+		Where("tenant_members.user_id = ? AND tenant_members.is_active = ?", userID, true).
+		Where("t.status = 'active' AND t.deleted_at IS NULL").
+		Where("ro.tenant_id IS NULL OR ro.tenant_id = tenant_members.tenant_id").
+		First(&member).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
