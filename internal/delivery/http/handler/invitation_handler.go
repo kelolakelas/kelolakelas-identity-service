@@ -129,6 +129,10 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 			})
 			return
 		}
+		if errors.Is(err, domain.ErrExistingTeacherRequired) || errors.Is(err, domain.ErrInvitationMemberInactive) {
+			c.JSON(http.StatusConflict, gin.H{"status": "error", "message": err.Error(), "data": nil})
+			return
+		}
 		if errors.Is(err, domain.ErrAlreadyTenantMember) {
 			c.JSON(http.StatusConflict, gin.H{
 				"status":  "error",
@@ -256,6 +260,7 @@ func (h *InvitationHandler) RevokeInvitation(c *gin.Context) {
 // @Failure 500 {object} domain.ErrorResponse
 // @Router /api/v1/invitations/verify [get]
 func (h *InvitationHandler) VerifyInvitation(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
 	token := c.Query("token")
 	if token == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

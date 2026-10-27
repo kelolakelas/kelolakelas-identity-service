@@ -151,6 +151,7 @@ func main() {
 		apiV1.GET("/tenants/:id/public", handler.PublicTenantHandler(tenantUsecase, publicCatalogPolicy))
 		apiV1.GET("/invitations/verify", invitationHandler.VerifyInvitation)
 		apiV1.POST("/invitations/register", invitationHandler.RegisterInvitedUser)
+		apiV1.POST("/invitations/accept", middleware.AuthMiddleware(jwtService), handler.AcceptExistingInvitation(usecase.NewExistingInvitations(invitationRepo, jwtService)))
 
 		apiV1.GET("/platform/me", middleware.AuthMiddleware(jwtService), platformHandler.Me)
 
